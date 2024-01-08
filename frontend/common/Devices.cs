@@ -8,31 +8,32 @@ namespace Cynteract.CGlove
 		Left, Right, Beacon
 	}
 
-	enum ConnectionType { Wired, Wireless }
+	enum ConnectionType { Usb, Bluetooth }
 
-	abstract class Devices
+	interface Devices
 	{
 
-		public Dictionary<string, Device> Devices;
-		public Device? GetDevice(DeviceType type);
+		Dictionary<string, Device> Devices { get; }
+		Device? GetDevice(DeviceType type);
 		// Explicitly trigger scan. There are automatic periodic scans without calling this function.
-		public TriggerScan();
-		public event Action<Device> OnNewDevice;
-		public event Action<Exception> OnError;
+		TriggerScan();
+		event Action<Device> OnNewDevice;
+		event Action<Exception> OnError;
 	}
 
 
-	abstract class Device
+	interface Device
 	{
-		public string Id;
-		public Dictionary<string, string> Information;
-		public ConnectionType ConnectionType;
-		public Dictionary<string, Any>? LastData;
-		public bool IsConnected;
-		public void SendData(Dictionary<string, Any>);
-		public event Action<Dictionary<string, Any>> OnData;
-		public event Action OnDisconnected;
-		public event Action OnConnected;
-		public event Action<Exception> OnError;
+		string Id { get; }
+		string Version { get; }
+		Dictionary<string, string> Information { get; }
+		ConnectionType ConnectionType { get; }
+		Dictionary<string, Any>? LastData { get; }
+		bool IsConnected { get; }
+		void SendData(Dictionary<string, Any>);
+		event Action<Dictionary<string, Any>> OnData;
+		event Action OnDisconnected;
+		event Action OnConnected;
+		event Action<Exception> OnError;
 	}
 }
