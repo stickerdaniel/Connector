@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": ".NET Core Launch (console)",
+            "name": "Main",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
@@ -13,7 +13,20 @@
             "args": [],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
-            "console": "internalConsole"
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Test",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/bin/Debug/net7.0-windows10.0.22621.0/Connector.exe",
+            "args": [
+                "test"
+            ],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "console": "integratedTerminal"
         }
     ]
 }

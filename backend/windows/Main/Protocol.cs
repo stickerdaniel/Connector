@@ -1,11 +1,7 @@
-﻿
-using System;
-using System.IO;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading;
+﻿using System.Runtime.InteropServices;
+using System.Text.Json.Serialization;
 
-namespace Cynteract.CGlove
+namespace Main
 {
     [StructLayout(LayoutKind.Sequential)]
     public struct IMUData
@@ -20,6 +16,7 @@ namespace Cynteract.CGlove
     [StructLayout(LayoutKind.Sequential)]
     public class DataReceive
     {
+        [JsonIgnore]
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
         public byte[] header = { (byte)'D', (byte)'A', (byte)'T', (byte)'A' };
         /// <summary> One value per force sensor, in the range [0, 1023]. </summary>
@@ -40,6 +37,7 @@ namespace Cynteract.CGlove
     [StructLayout(LayoutKind.Sequential)]
     public class DataSend
     {
+        [JsonIgnore]
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
         public readonly byte[] header = { (byte)'D', (byte)'A', (byte)'T', (byte)'A' };
         /// <summary> Set the vibration strength of the vibration motors, accepted value range is [0, 100]. </summary>
@@ -55,18 +53,45 @@ namespace Cynteract.CGlove
 
     public enum PacketType { None, Data, Information, Debug };
 
-    public class Protocol
+    public interface Protocol
     {
 
-        public static readonly byte[] PACKAGE_DELIM = { (byte)'C', (byte)'Y', (byte)'N', (byte)'T', (byte)'E', (byte)'R', (byte)'A', (byte)'C', (byte)'T', (byte)'\n' };
+        static readonly byte[] PACKAGE_DELIM = { (byte)'C', (byte)'Y', (byte)'N', (byte)'T', (byte)'E', (byte)'R', (byte)'A', (byte)'C', (byte)'T', (byte)'\n' };
+        static readonly int DATA_SEND_SIZE = Marshal.SizeOf<DataSend>();
+        static readonly int DATA_RECEIVE_SIZE = Marshal.SizeOf<DataReceive>();
 
-        public static bool MemoryCompare(byte[] sequence, byte[] array, int offset = 0)
+        static void SerializeData<T>(T dataIn, byte[] dataOut)
+        {
+            GCHandle h = GCHandle.Alloc(dataOut, GCHandleType.Pinned);
+            try
+            {
+                Marshal.StructureToPtr<T>(dataIn, h.AddrOfPinnedObject(), false);
+            }
+            finally
+            {
+                h.Free();
+            }
+        }
+        static T DeserializeData<T>(byte[] data)
+        {
+            // for serialization and deserialization of struct see https://stackoverflow.com/a/2887
+            GCHandle handle = GCHandle.Alloc(data, GCHandleType.Pinned);
+            try
+            {
+                //dataReceive = (DataReceive)Marshal.PtrToStructure(handle.AddrOfPinnedObject(), typeof(DataReceive));
+                return Marshal.PtrToStructure<T>(handle.AddrOfPinnedObject());
+            }
+            finally
+            {
+                handle.Free();
+            }
+        }
+        static bool MemoryCompare(byte[] sequence, byte[] array, int offset = 0)
         {
             for (int i = 0, j = offset; i < sequence.Length; i++, j++)
                 if (sequence[i] != array[j])
                     return false;
             return true;
         }
-
     }
 }
