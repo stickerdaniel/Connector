@@ -1,13 +1,8 @@
 using System;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Runtime.Serialization.Json;
-using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
-using System.Xml;
-using System.Xml.Linq;
-using System.Xml.XPath;
 using Main;
 
 namespace Test
@@ -43,7 +38,7 @@ namespace Test
             StopBackend();
         }
 
-        void OnData(DataReceive dataReceive)
+        void OnData(Dataframe data)
         {
             // print x-angles
             for (int i = 0; i < 16; i++)
@@ -52,17 +47,17 @@ namespace Test
                 Console.Write(("|" + i).PadLeft(2));
                 Console.ForegroundColor = ConsoleColor.White;
                 // error code
-                var status = new String[] { "B", "N", "E", "R" }[(int)(dataReceive.imuStatus[i] & 0b00001111)];
+                var status = new String[] { "B", "N", "E", "R" }[(int)(data.imuStatus[i] & 0b00001111)];
                 if (status == "R")
-                    Console.Write(String.Format("{0:f}", dataReceive.imu[i].x).PadLeft(5));
+                    Console.Write(String.Format("{0:f}", data.imu[i].x).PadLeft(5));
                 else
                     Console.Write((new String[] { "B", "N", "E", "R", "C" }
-[(int)dataReceive.imu[i].w]).PadLeft(5));
+[(int)data.imu[i].w]).PadLeft(5));
             }
 
             // print force
             Console.ForegroundColor = ConsoleColor.White;
-            var force = dataReceive.force;
+            var force = data.force;
             //Console.Write("{0} {1} {2} {3} {4} {5} {6} {7}", force[0], force[1], force[2], force[3], force[4], force[5], force[6], force[7]);
 
             // print elapsed time
@@ -75,10 +70,7 @@ namespace Test
         void StartBackend()
         {
             process = new();
-            process.StartInfo.FileName = System.Reflection.Assembly.GetExecutingAssembly().Location;
-            // in case of "dotnet run" or the debugger the program is run as dll
-            if (process.StartInfo.FileName.EndsWith(".dll"))
-                process.StartInfo.FileName = process.StartInfo.FileName.Replace(".dll", ".exe");
+            process.StartInfo.FileName = System.AppContext.BaseDirectory + "Connector.exe";
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.RedirectStandardOutput = true;
             // process.StartInfo.RedirectStandardError = true;
@@ -101,32 +93,33 @@ namespace Test
             // end of stream reached
             if (args.Data == null)
                 return;
-            Message message = Message.FromJson(args.Data);
-            if (message.Type == Message.Types.Data)
+            try
             {
-                var options = new JsonSerializerOptions
+                Message message = Message.FromJson(args.Data);
+                switch (message)
                 {
-                    IncludeFields = true,
-                };
-                DataReceive dataReceive = ((JsonElement)message.Body).GetProperty("data").Deserialize<DataReceive>(options);
-                string json = JsonSerializer.Serialize(dataReceive, options);
-                OnData(dataReceive);
+                    case Message.Data dataMessage:
+                        OnData(dataMessage.data);
+                        break;
+                    case Message.Error errorMessage:
+                        Console.WriteLine("----- " + errorMessage.type + " " + errorMessage.deviceId + " -----");
+                        Console.WriteLine(errorMessage.message);
+                        break;
+                    default:
+                        Console.WriteLine("----- " + message.type + " -----");
+                        var options = new JsonSerializerOptions { WriteIndented = true, IncludeFields = true, DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
+                        string prettyJson = JsonSerializer.Serialize<object>(message, options);
+                        Console.WriteLine(prettyJson);
+                        break;
+                }
             }
-            else
-                Console.WriteLine("Unknown message " + args.Data);
+            catch (Exception e)
+            {
+                Console.Error.WriteLine(e);
+            }
         }
         public static int Main(string[] args)
         {
-            DataSend dataSend = new();
-            for (int i = 0; i < dataSend.vibration.Length; i++)
-                dataSend.vibration[i] = 50;
-            var options = new JsonSerializerOptions
-            {
-                IncludeFields = true,
-            };
-            string json = JsonSerializer.Serialize<DataSend>(dataSend, options);
-            Console.WriteLine(json);
-
             Program test = new();
             Console.WriteLine("running tests...");
             // also checkout power/link interruptions

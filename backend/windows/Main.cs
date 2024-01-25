@@ -2,7 +2,6 @@
 
 using System;
 using System.IO;
-using System.Text.Json;
 
 namespace Main
 {
@@ -30,6 +29,7 @@ namespace Main
             {
                 return Test.Program.Main(args);
             }
+            new Message.Debug { message = "Backend started." }.Write(Console.Out);
             Program program = new Program();
             bool exit = false;
             while (!exit)

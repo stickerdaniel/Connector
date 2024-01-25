@@ -1,4 +1,7 @@
-﻿using System.Runtime.InteropServices;
+﻿#nullable enable
+// protocol between hardware device and pc
+
+using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
 
 namespace Main
@@ -21,16 +24,16 @@ namespace Main
         public byte[] header = { (byte)'D', (byte)'A', (byte)'T', (byte)'A' };
         /// <summary> One value per force sensor, in the range [0, 1023]. </summary>
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
-        public short[] force;
+        public required short[] force;
         /// <summary> One quaternion per imu sensor, the values are in the range [-1.0, 1.0]. </summary>
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
-        public IMUData[] imu;
+        public required IMUData[] imu;
         /// <summary> composite of: bb calibration profile nvs status ~ bb calibration status ~ bbbb system status </summary>
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
-        public byte[] imuStatus;
+        public required byte[] imuStatus;
         /// <summary> status of vibration feedback </summary>
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 10)]
-        public byte[] vibStatus;
+        public required byte[] vibStatus;
     };
 
     /// <summary> Packet format that is sent to the glove to change vibration strength or to request information on the glove. </summary>
@@ -62,6 +65,8 @@ namespace Main
 
         static void SerializeData<T>(T dataIn, byte[] dataOut)
         {
+            if (dataIn == null)
+                throw new System.ArgumentNullException(nameof(dataIn));
             GCHandle h = GCHandle.Alloc(dataOut, GCHandleType.Pinned);
             try
             {
@@ -74,12 +79,15 @@ namespace Main
         }
         static T DeserializeData<T>(byte[] data)
         {
-            // for serialization and deserialization of struct see https://stackoverflow.com/a/2887
+            if (data == null)
+                throw new System.ArgumentNullException(nameof(data));            // for serialization and deserialization of struct see https://stackoverflow.com/a/2887
             GCHandle handle = GCHandle.Alloc(data, GCHandleType.Pinned);
             try
             {
-                //dataReceive = (DataReceive)Marshal.PtrToStructure(handle.AddrOfPinnedObject(), typeof(DataReceive));
-                return Marshal.PtrToStructure<T>(handle.AddrOfPinnedObject());
+                T? deserialized = Marshal.PtrToStructure<T>(handle.AddrOfPinnedObject());
+                if (deserialized == null)
+                    throw new System.ArgumentNullException(nameof(data));
+                return deserialized;
             }
             finally
             {

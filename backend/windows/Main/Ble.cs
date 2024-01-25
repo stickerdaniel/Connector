@@ -48,7 +48,7 @@ namespace Main
         public event Action<HardwareInterface, string> OnDeviceConnected;
         public event Action<HardwareInterface, string> OnDeviceDisconnected;
         public event Action<HardwareInterface, string, string> OnDeviceError;
-        public event Action<HardwareInterface, string, string> OnDeviceInformation;
+        public event Action<HardwareInterface, string, Information> OnDeviceInformation;
         public event Action<HardwareInterface, string, DataReceive> OnDeviceData;
         public event Action<HardwareInterface, string, string> OnDeviceDebug;
 
@@ -128,10 +128,17 @@ namespace Main
             devices.Add(bleId, device);
             Task.Run(async () =>
             {
-                await CacheDevice(device);
-                await SubscribeCharacteristic(device.characteristics["data"]);
-                await SubscribeCharacteristic(device.characteristics["information"]);
-                await SubscribeCharacteristic(device.characteristics["debug"]);
+                try
+                {
+                    await CacheDevice(device);
+                    await SubscribeCharacteristic(device.characteristics["data"]);
+                    await SubscribeCharacteristic(device.characteristics["information"]);
+                    await SubscribeCharacteristic(device.characteristics["debug"]);
+                }
+                catch (Exception e)
+                {
+                    OnDeviceError?.Invoke(this, bleId, e.Message);
+                }
             });
         }
 
@@ -179,7 +186,8 @@ namespace Main
                 if (data.Length > 512)
                     throw new ArgumentOutOfRangeException("please keep your ble package at a size of maximum 512, cf. spec!");
                 string informationReceive = Encoding.ASCII.GetString(data);
-                OnDeviceInformation?.Invoke(this, sender.Service.DeviceId, informationReceive);
+                Information information = JsonHelper.FromJson<Information>(informationReceive);
+                OnDeviceInformation?.Invoke(this, sender.Service.DeviceId, information);
             }
             else if (uuid == Config.UUID_MAP["debug"])
             {
@@ -194,7 +202,6 @@ namespace Main
             if (status != GattCommunicationStatus.Success)
                 throw new Exception(String.Format("Error subscribing to characteristic with uuid {0} and status {1}", characteristic.Uuid, status));
             characteristic.ValueChanged += Characteristic_ValueChanged;
-            Console.Error.WriteLine(String.Format("Subscribed to Characteristic {0}", characteristic.ToString()));
         }
 
         public void RequestInformation(string id)
@@ -205,7 +212,9 @@ namespace Main
                 var result = await device.characteristics["information"].ReadValueAsync(BluetoothCacheMode.Uncached);
                 if (result.Status != GattCommunicationStatus.Success)
                     throw new Exception(String.Format("Error reading information characteristic: {0}", result.Status));
-                OnDeviceInformation?.Invoke(this, id, Encoding.ASCII.GetString(result.Value.ToArray()));
+                string informationReceive = Encoding.ASCII.GetString(result.Value.ToArray());
+                Information information = JsonHelper.FromJson<Information>(informationReceive);
+                OnDeviceInformation?.Invoke(this, id, information);
             });
         }
 
@@ -214,10 +223,14 @@ namespace Main
             BLEDevice device = devices[id];
             Task.Run(async () =>
             {
-                Protocol.SerializeData<DataSend>(data, device.packageSendBuffer);
-                var result = await device.characteristics["send"].WriteValueWithResultAsync(packageSendBuffer.AsBuffer());
-                if (result.Status != GattCommunicationStatus.Success)
-                    throw new Exception(String.Format("Error Writing BLE Package {0}", result.Status));
+                try
+                {
+                    Protocol.SerializeData<DataSend>(data, device.packageSendBuffer);
+                    var result = await device.characteristics["send"].WriteValueWithResultAsync(packageSendBuffer.AsBuffer());
+                    if (result.Status != GattCommunicationStatus.Success)
+                        throw new Exception(String.Format("Error Writing BLE Package {0}", result.Status));
+                }
+                catch (Exception e) { OnDeviceError?.Invoke(this, id, e.Message); }
             });
         }
     }

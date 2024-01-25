@@ -1,10 +1,8 @@
 #nullable enable
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Text.Json;
-using Windows.Services.Maps;
+using System.Linq;
 
 namespace Main
 {
@@ -20,11 +18,11 @@ namespace Main
         class Device
         {
             // use hwid for now; should be replaced with a serial id
-            public required string id;
+            public required string deviceId;
             public required string connectionType;
             public required bool isConnected;
             public string? version;
-            public object? information;
+            public Information? information;
         }
         Dictionary<string, Device> devices = new();
         class HWInterfaces
@@ -57,88 +55,132 @@ namespace Main
             }
         }
         readonly object messageLock = new();
-        public void HWOnDeviceConnected(HardwareInterface sender, string id)
+        public void HWOnDeviceConnected(HardwareInterface sender, string deviceId)
         {
-            if (!devices.ContainsKey(id))
+
+            if (!devices.ContainsKey(deviceId))
             {
-                devices[id] = new Device()
+                devices[deviceId] = new Device()
                 {
-                    id = id,
+                    deviceId = deviceId,
                     connectionType = sender.ConnectionType,
-                    isConnected = true,
+                    // defer to next code block
+                    isConnected = false,
                 };
             }
-            else
+
+            Device device = devices[deviceId];
+            // there can be mutliple events for one connect
+            if (!device.isConnected)
             {
                 // TODO handle change of hardware interface (usb <-> bluetooth)
-                devices[id].isConnected = true;
-                if (devices[id].information == null)
-                    sender.RequestInformation(id);
+                device.isConnected = true;
+                if (device.information == null)
+                    sender.RequestInformation(deviceId);
                 else
-                    OnMessageOut?.Invoke(new Message(Message.Types.Connect, devices[id]));
+                    OnMessageOut?.Invoke(new Message.Connect()
+                    {
+                        deviceId = deviceId,
+                        connectionType = device.connectionType,
+                        isConnected = device.isConnected,
+                        version = device.version!,
+                        information = device.information!
+                    });
             }
         }
-        public void HWOnDeviceDisconnected(HardwareInterface sender, string id)
+        public void HWOnDeviceDisconnected(HardwareInterface sender, string deviceId)
         {
-            if (devices.ContainsKey(id))
+            // there can be mutliple events for one disconnect 
+            if (devices.ContainsKey(deviceId) && devices[deviceId].isConnected)
             {
-                devices[id].isConnected = false;
-                OnMessageOut?.Invoke(new Message(Message.Types.Disconnect, devices[id]));
+                devices[deviceId].isConnected = false;
+                OnMessageOut?.Invoke(new Message.Disconnect() { deviceId = deviceId });
             }
         }
-        public void HWOnDeviceError(HardwareInterface sender, string id, string error)
+        public void HWOnDeviceError(HardwareInterface sender, string deviceId, string message)
         {
-            OnMessageOut?.Invoke(new Message(Message.Types.Error, new { id, error }));
-        }
-        public void HWOnDeviceInformation(HardwareInterface sender, string id, string information)
-        {
-            if (devices.ContainsKey(id))
+            OnMessageOut?.Invoke(new Message.Error()
             {
-                if (devices[id].information == null)
+                deviceId = deviceId,
+                message = message
+            });
+        }
+        public void HWOnDeviceInformation(HardwareInterface sender, string deviceId, Information information)
+        {
+            if (devices.ContainsKey(deviceId))
+            {
+                Device device = devices[deviceId];
+                if (device.information == null)
                 {
-                    var json = JsonSerializer.Deserialize<Dictionary<string, dynamic>>(information)!;
-                    devices[id].version = json.GetValueOrDefault("version", "1");
-                    devices[id].information = information;
-                    OnMessageOut?.Invoke(new Message(Message.Types.Connect, devices[id]));
+                    device.information = information;
+                    device.version = information.version ?? "1";
+                    OnMessageOut?.Invoke(new Message.Connect()
+                    {
+                        deviceId = deviceId,
+                        connectionType = device.connectionType,
+                        isConnected = device.isConnected,
+                        version = device.version!,
+                        information = device.information!
+                    });
                 }
                 else
-                    devices[id].information = information;
+                    device.information = information;
             }
         }
-        public void HWOnDeviceData(HardwareInterface sender, string id, DataReceive data)
+        public void HWOnDeviceData(HardwareInterface sender, string deviceId, DataReceive data)
         {
-            OnMessageOut?.Invoke(new Message(Message.Types.Data, new { id, data }));
+            // only propagate data after receiving information
+            if (devices[deviceId].version != null)
+                OnMessageOut?.Invoke(new Message.Data()
+                {
+                    deviceId = deviceId,
+                    data = new Dataframe()
+                    {
+                        force = data.force,
+                        imu = data.imu.Select(quaternion => new Dataframe.IMUData()
+                        {
+                            x = quaternion.x,
+                            y = quaternion.y,
+                            z = quaternion.z,
+                            w = quaternion.w
+                        }).ToArray(),
+                        imuStatus = data.imuStatus,
+                        vibStatus = data.vibStatus
+                    }
+                });
         }
-        public void HWOnDeviceDebug(HardwareInterface sender, string id, string debug)
+        public void HWOnDeviceDebug(HardwareInterface sender, string deviceId, string message)
         {
-            OnMessageOut?.Invoke(new Message(Message.Types.Debug, new { id, debug }));
+            OnMessageOut?.Invoke(new Message.Debug()
+            {
+                deviceId = deviceId,
+                message = message
+            });
         }
 
         public void OnMessageIn(Message message)
         {
-            var body = (JsonElement)message.Body;
-            switch (message.Type)
+            switch (message)
             {
-                case Message.Types.Scan:
-                    if (body.GetString() == "usb")
+                case Message.Scan scanMessage:
+                    if (scanMessage.connectionType == ConnectionType.Usb)
                         hwInterfaces.usb.StartScan();
                     // TODO bluetooth
                     // hwInterfaces.bluetooth.StartScan();
                     break;
-                case Message.Types.Data:
-                    string deviceId = body.GetProperty("id").GetString()!;
+                case Message.Command commandMessage:
+                    string deviceId = commandMessage.deviceId!;
                     if (devices.ContainsKey(deviceId) && devices[deviceId].isConnected && devices[deviceId].connectionType == ConnectionType.Usb)
                     {
-                        var options = new JsonSerializerOptions
+                        hwInterfaces.usb.SendData(deviceId, new DataSend()
                         {
-                            IncludeFields = true,
-                            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                        };
-                        hwInterfaces.usb.SendData(deviceId, body.GetProperty("data").Deserialize<DataSend>(options)!);
+                            vibration = commandMessage.command.vibration,
+                            vibrationPattern = commandMessage.command.vibrationPattern,
+                        });
                     }
                     break;
                 default:
-                    throw new Exception("Unknown message id: " + message.Type);
+                    throw new Exception("Unknown message type: " + message.type);
             }
         }
         public event Action<Message>? OnMessageOut;

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
-using Microsoft.Win32;
 using System.IO.Ports;
 using System.IO;
 using System.Linq;
@@ -40,7 +39,7 @@ namespace Main
         public event Action<HardwareInterface, string> OnDeviceConnected;
         public event Action<HardwareInterface, string> OnDeviceDisconnected;
         public event Action<HardwareInterface, string, string> OnDeviceError;
-        public event Action<HardwareInterface, string, string> OnDeviceInformation;
+        public event Action<HardwareInterface, string, Information> OnDeviceInformation;
         public event Action<HardwareInterface, string, DataReceive> OnDeviceData;
         public event Action<HardwareInterface, string, string> OnDeviceDebug;
 
@@ -79,8 +78,8 @@ namespace Main
             }
             foreach (var portName in ports.Except(devices.Keys))
             {
-                OnDeviceConnected?.Invoke(this, portName);
                 StartDevice(portName);
+                // OnDeviceConnected event is fired after the port is opened
             }
 
             foreach (var portName in devices.Keys.Except(ports))
@@ -107,8 +106,6 @@ namespace Main
             UsbDevice device = devices[portName];
             // (re-)open serial port on first connect and on reconnects(?)
             bool doOpen = true;
-            int failureCounter = 0;
-
             bool quit = false;
             while (!quit)
             {
@@ -120,6 +117,7 @@ namespace Main
                         device.serial.DiscardOutBuffer();
                         device.serial.DiscardInBuffer();
                         doOpen = false;
+                        OnDeviceConnected?.Invoke(this, portName);
                     }
                     ReadPackage(portName, device.serial, device.packageReadBuffer);
                 }
@@ -130,13 +128,7 @@ namespace Main
                 }
                 catch (Exception e)
                 {
-                    failureCounter++;
-                    // too many failures in a row, report this
-                    if (failureCounter >= 5)
-                    {
-                        OnDeviceError?.Invoke(this, portName, e.ToString());
-                        failureCounter = 0;
-                    }
+                    OnDeviceError?.Invoke(this, portName, e.ToString());
                     Thread.Sleep(50);
                     // check if device is still connected as com device
                     StartScan();
@@ -224,9 +216,12 @@ namespace Main
                     }
                     else if (buffer.data[0] == '{')
                     {
-                        // glove information sent as json
-                        string informationReceive = Encoding.ASCII.GetString(buffer.data, 0, buffer.offset - Protocol.PACKAGE_DELIM.Length);
-                        OnDeviceInformation?.Invoke(this, id, informationReceive);
+                        // glove information sent as modified json without quotes
+                        string information = Encoding.ASCII.GetString(buffer.data, 0, buffer.offset - Protocol.PACKAGE_DELIM.Length);
+                        // unstrip double quotes to create valid json again
+                        string json = Regex.Replace(information, @"[\w]+", (m) => '"' + m.ToString() + '"');
+                        Information deserialized = JsonHelper.FromJson<Information>(json);
+                        OnDeviceInformation?.Invoke(this, id, deserialized);
                     }
 
                 }
