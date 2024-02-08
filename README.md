@@ -44,3 +44,21 @@ The `windows.sln` is only kept in place because vscode won't highlight syntax er
 ## Windows Frontend
 
 This is a Unity scene with a small test-script. You need to export the windows backend binaries first, as explained in "Windows Backend". The binaries are not committed into git.
+
+## Android backend
+
+- Download and install android studio
+- Open project ./backend/android/connector/ in android studio
+- In Android studio go to "Settings">"Languages & Frameworks">"Android SDK">"SDK Tools"> and install "Android SDK Platform-Tools"
+- Connect your smart phone to android studio via wireless debugging
+    - In Android studio click on "Device manager" then click on "Pair device using wifi"
+    - Now in Android smart phone, Make sure to enable developer options
+    - In "Settings">"Developer Options" turn on "Wireless debugging"
+    - You can choose any option to pair with project, It is convinent to use "Pair device with QR code" 
+    - Press on option "Pair device with  QR code", Now scan QR code which is visible in Android studio
+- After connecting press "Run app" button in Android studio to run app on your mobile phone
+- Open "Logcat" to see all data logs and usb connection information
+- Connect Data glove to smart phone via USB
+
+
+To export project to unity create android archive for connector sub module
