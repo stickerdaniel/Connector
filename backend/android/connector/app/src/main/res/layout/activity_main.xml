@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <TextView
+        android:id="@+id/txtTerminal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/layoutInput"
+        android:scrollbars="vertical"
+        android:textColor="#FFFFFF"
+        android:textSize="12sp" />
+
+    <LinearLayout
+        android:id="@+id/layoutInput"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_alignParentBottom="true"
+        android:background="#000000"
+        android:orientation="horizontal">
+
+        <EditText
+            android:id="@+id/edtMessage"
+            android:layout_width="337dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:background="#FFFFFF"
+            android:hint="Enter message"
+            android:inputType="text"
+            android:padding="5dp" />
+
+        <Button
+            android:id="@+id/btnSend"
+            android:layout_width="103dp"
+            android:layout_height="60dp"
+            android:backgroundTint="@color/tint_blue"
+            android:radius="24dp"
+            android:stateListAnimator="@null"
+            android:text="Send"
+            android:textColor="#FFFFFF" />
+    </LinearLayout>
+
+
+</RelativeLayout>
