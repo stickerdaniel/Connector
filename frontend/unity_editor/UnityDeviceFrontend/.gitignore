@@ -9,6 +9,7 @@
 
 # binaries
 Connector_bin/
+Connector_aar/
 
 # Visual Studio / MonoDevelop generated
 /.vs

@@ -28,8 +28,9 @@ You can use following lines as sample-input for the program:
 
 To sync the program to the unity frontend, run:
 
-```bat
-copy /Y .\Main\PlatformInterface.cs ..\..\frontend\unity_editor\UnityDeviceFrontend\Assets\PlatformInterface.cs
+```powershell
+cd .\backend\windows
+Copy-Item -Path ".\Main\PlatformInterface.cs" -Destination "..\..\frontend\unity_editor\UnityDeviceFrontend\Assets\PlatformInterface.cs" -Force
 dotnet publish -c Release -r win10-x64 --no-self-contained -o ../../frontend/unity_editor/UnityDeviceFrontend/Assets/Connector_bin Connector.csproj
 ```
 
@@ -62,3 +63,9 @@ This is a Unity scene with a small test-script. You need to export the windows b
 
 
 To export project to unity create android archive for connector sub module
+
+```powershell
+cd .\backend\android
+./gradlew :app:connector:assembleRelease   
+Copy-Item -Path .\app\connector\build\outputs\aar\connector-release.aar -Destination .\..\..\frontend\unity_editor\UnityDeviceFrontend\Assets\Connector_aar -Force
+```

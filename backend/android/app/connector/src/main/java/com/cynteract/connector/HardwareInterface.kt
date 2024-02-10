@@ -2,7 +2,6 @@ package com.cynteract.connector
 
 import android.content.Context
 
-
 interface HardwareInterface {
 
     var onDeviceConnected: ((HardwareInterface, String) -> Unit)?
