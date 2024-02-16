@@ -67,5 +67,5 @@ To export project to unity create android archive for connector sub module
 ```powershell
 cd .\backend\android
 ./gradlew :app:connector:assembleRelease   
-Copy-Item -Path .\app\connector\build\outputs\aar\connector-release.aar -Destination .\..\..\frontend\unity_editor\UnityDeviceFrontend\Assets\Connector_aar -Force
+Copy-Item -Path .\app\connector\build\outputs\aar\connector-release.aar -Destination .\..\..\frontend\unity_editor\UnityDeviceFrontend\Assets\Plugins -Force
 ```

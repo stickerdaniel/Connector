@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="NONE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="44ad06c8-bc68-4258-aceb-8af2073cdd6d" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/../../../frontend/unity_editor/UnityDeviceFrontend/Assets/Devices.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/unity_editor/UnityDeviceFrontend/Assets/Devices.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/unity_editor/UnityDeviceFrontend/Assets/DevicesTest.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/unity_editor/UnityDeviceFrontend/Assets/DevicesTest.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/unity_editor/UnityDeviceFrontend/Assets/JsonHelper.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/unity_editor/UnityDeviceFrontend/Assets/JsonHelper.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/unity_editor/UnityDeviceFrontend/Assets/PlatformInterface.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/unity_editor/UnityDeviceFrontend/Assets/PlatformInterface.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/unity_editor/UnityDeviceFrontend/Packages/manifest.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/unity_editor/UnityDeviceFrontend/Packages/manifest.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/unity_editor/UnityDeviceFrontend/Packages/packages-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/unity_editor/UnityDeviceFrontend/Packages/packages-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/unity_editor/UnityDeviceFrontend/ProjectSettings/ProjectSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/unity_editor/UnityDeviceFrontend/ProjectSettings/ProjectSettings.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/unity_editor/UnityDeviceFrontend/ProjectSettings/ProjectVersion.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/unity_editor/UnityDeviceFrontend/ProjectSettings/ProjectVersion.txt" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../../.." />
+  </component>
+  <component name="ProjectId" id="2cJXoFM5kGr5DnsbI4OBiFjyXGj" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "C:/Users/SES/Connector/backend/android"
+  }
+}]]></component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="44ad06c8-bc68-4258-aceb-8af2073cdd6d" name="Changes" comment="" />
+      <created>1707830829193</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1707830829193</updated>
+    </task>
+    <servers />
+  </component>
+</project>

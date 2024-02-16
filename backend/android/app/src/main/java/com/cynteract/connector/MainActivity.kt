@@ -14,11 +14,11 @@ class MainActivity : Activity() {
 
     private lateinit var txtTerminal: TextView
     private lateinit var edtMessage: EditText
-    val usb = Usb()
-    val bluetooth: Ble = Ble()
-    val deviceCache: DeviceCache =
-        DeviceCache(usb, bluetooth)
-
+    private var plugin = Main(object : MessageListener {
+        override fun onMessage(command: String) {
+            Log.d("Main", "onMessage: $command")
+        }
+    })
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,18 +27,9 @@ class MainActivity : Activity() {
         txtTerminal = findViewById(R.id.txtTerminal)
         edtMessage = findViewById(R.id.edtMessage)
         val btnSend = findViewById<Button>(R.id.btnSend)
-
-        deviceCache.onMessageOut = { message -> message.write { Log.d("main", it) } }
-        usb.init(this)
-        btnSend.setOnClickListener {
-            sendMessage()
-        }
+        plugin.initialize(this)
     }
 
-    fun onCommand(command: String) {
-        val message = Message.readLine(command)
-        deviceCache.onMessageIn(message)
-    }
 
     private fun sendMessage() {
         val message = edtMessage.text.toString()

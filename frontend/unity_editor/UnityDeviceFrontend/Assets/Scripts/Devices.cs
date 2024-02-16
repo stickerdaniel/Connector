@@ -35,7 +35,6 @@ namespace Main
         ConnectionType ConnectionType { get; }
         Dataframe? LastData { get; }
         bool IsConnected { get; }
-        // data must be serializable to json
         void SendCommand(DeviceCommand data);
         event Action<Dataframe> OnData;
         event Action OnDisconnected;

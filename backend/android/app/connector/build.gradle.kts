@@ -37,5 +37,4 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.github.mik3y:usb-serial-for-android:3.7.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
-
 }
