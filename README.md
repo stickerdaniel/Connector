@@ -69,3 +69,11 @@ cd .\backend\android
 ./gradlew :app:connector:assembleRelease   
 Copy-Item -Path .\app\connector\build\outputs\aar\connector-release.aar -Destination .\..\..\frontend\unity_editor\UnityDeviceFrontend\Assets\Plugins -Force
 ```
+
+## Exporting Unity package
+
+In Unity Editor select "Assets">"Export package" Export all files in project.
+
+## Importing Unity package
+
+In Unity Editor select "Assets">"Import package">"Custom package" import all files into project.
