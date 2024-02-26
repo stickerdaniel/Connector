@@ -58,7 +58,7 @@ This is a Unity scene with a small test-script. You need to export the windows b
     - You can choose any option to pair with project, It is convinent to use "Pair device with QR code" 
     - Press on option "Pair device with  QR code", Now scan QR code which is visible in Android studio
 - After connecting press "Run app" button in Android studio to run app on your mobile phone
-- Open "Logcat" to see all data logs and usb connection information
+- Open "Logcat", set filter to "package:com.cynteract.connector" to see all data logs and usb connection information
 - Connect Data glove to smart phone via USB
 
 
