@@ -1,4 +1,7 @@
-// this file is the same as in the Unity frontend
+// this file is synced between following two places:
+//      backend\windows\Main\PlatformInterface.cs 
+//      frontend\Unity\Assets\Scripts\Main\PlatformInterface.cs
+//
 // nullable is not used as the "required" keyword is missing in Unity (C# 9)
 #nullable disable
 
@@ -89,6 +92,11 @@ namespace Main
                 writer.WriteLine(json);
             }
             writer.Flush();
+        }
+
+        public string ToJson()
+        {
+            return JsonHelper.ToJson(this);
         }
 
         public static Message ReadLine(TextReader reader)

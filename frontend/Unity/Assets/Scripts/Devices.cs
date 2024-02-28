@@ -21,6 +21,8 @@ namespace Main
         Device? GetDevice(DeviceType type);
         // Explicitly trigger scan. There are automatic periodic scans without calling this function.
         void TriggerScan();
+        void Start();
+        void Stop();
         event Action<Device> OnNewDevice;
         event Action<Exception> OnError;
     }

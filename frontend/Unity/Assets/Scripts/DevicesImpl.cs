@@ -3,100 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 using Debug = UnityEngine.Debug;
-
-
-#if UNITY_ANDROID
-
-class PlatformSpecific
-{
-
-    AndroidJavaObject main;
-    class MessageListener : AndroidJavaProxy
-    {
-        public MessageListener() : base("com.cynteract.connector.MessageListener") { }
-
-        public void onMessageIn(string message)
-        {
-            Debug.Log("Received callback from Android: " + message);
-        }
-    }
-
-    public void Start()
-    {
-        AndroidJavaClass unityPlayerClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
-        AndroidJavaObject unityActivity = unityPlayerClass.GetStatic<AndroidJavaObject>("currentActivity");
-
-        main = new AndroidJavaObject("com.cynteract.connector.Main", new MessageListener());
-        main.Call("initialize", unityActivity);
-    }
-
-    public void Stop()
-    {
-    }
-
-    public void SendMessage(string message)
-    {
-        main.Call("sendMessage", message);
-    }
-}
-
-#elif UNITY_EDITOR
-
-using System.Diagnostics;
-class PlatformSpecific
-{
-    Process? process;
-
-    public void Start(DevicesImpl devicesImpl)
-    {
-        process = new Process();
-        process.StartInfo.FileName = Application.dataPath + "./Connector_bin/Connector.exe";
-        process.StartInfo.UseShellExecute = false;
-        process.StartInfo.RedirectStandardOutput = true;
-        process.StartInfo.RedirectStandardError = true;
-        process.StartInfo.RedirectStandardInput = true;
-        // keep terminal window open in case Unity doesn't stop the process
-        process.StartInfo.CreateNoWindow = false;
-
-        // process.OutputDataReceived += OnMessage;
-        process.OutputDataReceived += (sender, args) =>
-        {
-            // end of stream reached, backend has stopped
-            if (args.Data == null)
-                return;
-
-            devicesImpl.OnMessage(sender, args.Data);
-        }
-        process.ErrorDataReceived += (sender, args) => devicesImpl.OnError?.Invoke(new Exception(args.Data));
-
-        process.Start();
-
-        process.BeginOutputReadLine();
-        process.BeginErrorReadLine();
-    }
-
-    public void Stop()
-    {
-        if (process != null && !process.HasExited)
-        {
-            process.Kill();
-            process.WaitForExit();
-            process = null;
-        }
-    }
-
-    public void SendMessage(Message message)
-    {
-        if (process == null || process.HasExited)
-            throw new Exception("Backend is not running");
-
-        message.Write(process.StandardInput);
-    }
-}
-
-#endif
 
 namespace Main
 {
@@ -184,6 +91,11 @@ namespace Main
             platformSpecific.Stop();
         }
 
+        public void RaiseError(Exception e)
+        {
+            OnError?.Invoke(e);
+        }
+
         void SendMessage(Message message)
         {
             try
@@ -196,7 +108,7 @@ namespace Main
             }
         }
 
-        void OnMessage(object sender, string messageString)
+        public void OnMessage(string messageString)
         {
             try
             {

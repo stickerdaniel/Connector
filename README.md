@@ -30,8 +30,8 @@ To sync the program to the unity frontend, run:
 
 ```powershell
 cd .\backend\windows
-Copy-Item -Path ".\Main\PlatformInterface.cs" -Destination "..\..\frontend\Unity\Assets\PlatformInterface.cs" -Force
-dotnet publish -c Release -r win10-x64 --no-self-contained -o ../../frontend/Unity/Assets/Connector_bin Connector.csproj
+Copy-Item -Path ".\Main\PlatformInterface.cs" -Destination "..\..\frontend\Unity\Assets\Scripts\PlatformInterface.cs" -Force
+dotnet publish -c Release -r win10-x64 --no-self-contained -o ../../frontend/Unity/Assets/Plugins/Windows Connector.csproj
 ```
 
 To show all compiler warnings, run:

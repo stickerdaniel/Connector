@@ -3,10 +3,10 @@ using UnityEngine;
 
 public class DevicesTest : MonoBehaviour
 {
+    Devices devices = new DevicesImpl();
 
     void Start()
     {
-        Devices devices = new DevicesImpl();
         Debug.Log("Starting");
         devices.OnError += Debug.Log;
         devices.OnNewDevice += (device) =>
@@ -20,6 +20,10 @@ public class DevicesTest : MonoBehaviour
         };
         devices.Start();
         // windowsDevices.TriggerScan();
+    }
+    void OnDisable()
+    {
+        devices.Stop();
     }
 
 }
