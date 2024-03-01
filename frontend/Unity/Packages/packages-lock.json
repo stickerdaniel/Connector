@@ -1,5 +1,11 @@
 {
   "dependencies": {
+    "com.cynteract.connector": {
+      "version": "file:com.cynteract.connector",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.unity.2d.animation": {
       "version": "9.0.4",
       "depth": 1,

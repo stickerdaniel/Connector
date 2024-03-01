@@ -2,6 +2,33 @@
 
 Library that connects to the hardware via USB or BLE.
 
+## Unity Frontend
+
+To run the provided sample scene or to import the package into another Unity scene, you have to create the windows and android backend binaries first. Those binaries are not committed into git to keep the history clean. 
+
+Install the .net 7 sdk (~200MB) from here: https://dotnet.microsoft.com/en-us/download/dotnet/7.0 . If you have a newer sdk installed, you can also use that. In that case you only need to download and install the ".NET Runtime 7.*" (~20MB) from that url.
+
+Install the android sdk. It is recommended to install android studio first and then install the android sdk via android studio. See [Android backend](#android-backend) on how to install the sdk via android studio.
+
+Clone this repository (`git clone git@github.com:Cynteract/Connector.git`), open powershell and run following commands:
+
+```powershell
+# powershell
+
+# compile windows backend
+cd .\backend\windows
+dotnet publish -c Release -r win10-x64 --no-self-contained -o ../../frontend/Unity/Assets/Plugins/Windows Connector.csproj
+
+# compile android backend
+cd ..\android
+./gradlew :app:connector:assembleRelease   
+Copy-Item -Path .\app\connector\build\outputs\aar\connector-release.aar -Destination .\..\..\frontend\Unity\Assets\Plugins -Force
+```
+
+To run the included sample, open the Unity project `frontend/Unity` and run it. It will log all input from the backend. You can also build the android apk to check it on your android phone.
+
+To import the package into another Unity project, open Unity's Package Manager, click the "+"-button in the status bar, select "Add package from disk", navigate to `frontend\Unity\Packages\com.cynteract.connector` and double-click the `package.json` file in the file browser. Then copy the folder `frontend/Unity/Assets/Plugins` into the root of the `Assets` folder of the other Unity project. Those can not be imported via Unity's package manager yet. 
+
 ## Windows Backend
 
 - Install vscode and the C# extension inside vscode.
@@ -42,15 +69,11 @@ dotnet build -t:"clean,build" Connector.csproj
 
 The `windows.sln` is only kept in place because vscode won't highlight syntax errors otherwise.
 
-## Windows Frontend
-
-This is a Unity scene with a small test-script. You need to export the windows backend binaries first, as explained in "Windows Backend". The binaries are not committed into git.
-
 ## Android backend
 
-- Download and install android studio
-- Open project ./backend/android/connector/ in android studio
+- Install android studio from https://developer.android.com/studio (~1.1GB).
 - In Android studio go to "Settings">"Languages & Frameworks">"Android SDK">"SDK Tools"> and install "Android SDK Platform-Tools"
+- Open project `./backend/android/connector` in android studio
 - Connect your smart phone to android studio via wireless debugging
     - In Android studio click on "Device manager" then click on "Pair device using wifi"
     - Now in Android smart phone, Make sure to enable developer options
@@ -69,11 +92,3 @@ cd .\backend\android
 ./gradlew :app:connector:assembleRelease   
 Copy-Item -Path .\app\connector\build\outputs\aar\connector-release.aar -Destination .\..\..\frontend\Unity\Assets\Plugins -Force
 ```
-
-## Exporting Unity package
-
-In Unity Editor select "Assets">"Export package" Export all files in project.
-
-## Importing Unity package
-
-In Unity Editor select "Assets">"Import package">"Custom package" import all files into project.

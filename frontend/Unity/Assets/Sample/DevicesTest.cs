@@ -1,9 +1,9 @@
-using Main;
+using Connector;
 using UnityEngine;
 
 public class DevicesTest : MonoBehaviour
 {
-    Devices devices = new DevicesImpl();
+    IDeviceManager devices = Devices.GetManager();
 
     void Start()
     {
@@ -25,5 +25,4 @@ public class DevicesTest : MonoBehaviour
     {
         devices.Stop();
     }
-
 }

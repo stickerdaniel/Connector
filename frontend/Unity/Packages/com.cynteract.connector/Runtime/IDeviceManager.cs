@@ -5,30 +5,30 @@
 using System;
 using System.Collections.Generic;
 
-namespace Main
+namespace Connector
 {
-    enum DeviceType
+    public enum DeviceType
     {
         Left, Right, Beacon
     }
 
-    enum ConnectionType { Usb, Bluetooth }
+    public enum ConnectionType { Usb, Bluetooth }
 
-    interface Devices
+    public interface IDeviceManager
     {
 
-        Dictionary<string, Device> Devices { get; }
-        Device? GetDevice(DeviceType type);
+        Dictionary<string, IDevice> Devices { get; }
+        IDevice? GetDevice(DeviceType type);
         // Explicitly trigger scan. There are automatic periodic scans without calling this function.
         void TriggerScan();
         void Start();
         void Stop();
-        event Action<Device> OnNewDevice;
+        event Action<IDevice> OnNewDevice;
         event Action<Exception> OnError;
     }
 
 
-    interface Device
+    public interface IDevice
     {
         string Id { get; }
         string Version { get; }

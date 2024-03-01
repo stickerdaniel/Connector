@@ -5,13 +5,19 @@ using System.Collections.Generic;
 using System.Linq;
 using Debug = UnityEngine.Debug;
 
-namespace Main
+namespace Connector
 {
-    [Serializable]
-    class DevicesImpl : Devices
+    public class Devices
     {
-        [Serializable]
-        public class DeviceImpl : Device
+        public static IDeviceManager GetManager()
+        {
+            return new DeviceManager();
+        }
+    }
+
+    class DeviceManager : IDeviceManager
+    {
+        class Device : IDevice
         {
             public string Id { get; set; }
             public string Version { get; set; }
@@ -55,7 +61,7 @@ namespace Main
 
             public Action<DeviceCommand> sendData;
 
-            public DeviceImpl(string id, string version, Information information, DeviceType deviceType, ConnectionType connectionType, bool isConnected, Action<DeviceCommand> sendData)
+            public Device(string id, string version, Information information, DeviceType deviceType, ConnectionType connectionType, bool isConnected, Action<DeviceCommand> sendData)
             {
                 Id = id;
                 Version = version;
@@ -69,16 +75,16 @@ namespace Main
 
         PlatformSpecific platformSpecific = new PlatformSpecific();
 
-        readonly Dictionary<string, Device> devices = new Dictionary<string, Device>();
+        readonly Dictionary<string, IDevice> devices = new Dictionary<string, IDevice>();
 
-        public Dictionary<string, Device> Devices
+        public Dictionary<string, IDevice> Devices
         {
             get => devices;
             set => throw new NotImplementedException();
         }
 
 
-        public event Action<Device>? OnNewDevice;
+        public event Action<IDevice>? OnNewDevice;
         public event Action<Exception>? OnError;
 
         public void Start()
@@ -115,13 +121,13 @@ namespace Main
                 Debug.Log(messageString);
                 // deserialize twice as described in https://docs.unity3d.com/2020.1/Documentation/Manual/JSONSerialization.html
                 Message message = Message.FromJson(messageString);
-                DeviceImpl? device = null;
+                Device? device = null;
 
 
                 switch (message)
                 {
                     case Message.Connect connectMessage:
-                        device = (DeviceImpl)devices[connectMessage.deviceId];
+                        device = (Device)devices[connectMessage.deviceId];
                         if (device != null)
                         {
                             device.IsConnected = true;
@@ -143,7 +149,7 @@ namespace Main
                                 _ => throw new Exception("Unknown connection type: " + connectMessage.connectionType)
                             };
 
-                            device = new DeviceImpl(
+                            device = new Device(
                                 id: connectMessage.deviceId,
                                 version: connectMessage.version,
                                 information: connectMessage.information,
@@ -168,7 +174,7 @@ namespace Main
                         break;
 
                     case Message.Disconnect disconnectMessage:
-                        device = (DeviceImpl)devices[disconnectMessage.deviceId];
+                        device = (Device)devices[disconnectMessage.deviceId];
                         if (device == null)
                             throw new Exception("Received disconnect for an unknown device: " + disconnectMessage.deviceId);
 
@@ -177,7 +183,7 @@ namespace Main
                         break;
 
                     case Message.Data dataMessage:
-                        device = (DeviceImpl)devices[dataMessage.deviceId];
+                        device = (Device)devices[dataMessage.deviceId];
                         if (device == null)
                             throw new Exception("Received data for an unknown device: " + dataMessage.deviceId);
                         device.RaiseData(dataMessage.data);
@@ -205,7 +211,7 @@ namespace Main
             }
         }
 
-        public Device? GetDevice(DeviceType type)
+        public IDevice? GetDevice(DeviceType type)
         {
             return devices.Values.First(device => device.DeviceType == type);
         }
