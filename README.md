@@ -22,7 +22,7 @@ dotnet publish -c Release -r win10-x64 --no-self-contained -o ../../frontend/Uni
 # compile android backend
 cd ..\android
 ./gradlew :app:connector:assembleRelease   
-Copy-Item -Path .\app\connector\build\outputs\aar\connector-release.aar -Destination .\..\..\frontend\Unity\Assets\Plugins -Force
+Copy-Item -Path .\app\connector\build\outputs\aar\connector-release.aar -Destination .\..\..\frontend\Unity\Assets\Plugins\Android -Force
 ```
 
 To run the included sample, open the Unity project `frontend/Unity` and run it. It will log all input from the backend. You can also build the android apk to check it on your android phone.
@@ -57,7 +57,7 @@ To sync the program to the unity frontend, run:
 
 ```powershell
 cd .\backend\windows
-Copy-Item -Path ".\Main\PlatformInterface.cs" -Destination "..\..\frontend\Unity\Assets\Scripts\PlatformInterface.cs" -Force
+Copy-Item -Path ".\Main\PlatformInterface.cs" -Destination "..\..\frontend\Unity\Packages\com.cynteract.connector\Runtime" -Force
 dotnet publish -c Release -r win10-x64 --no-self-contained -o ../../frontend/Unity/Assets/Plugins/Windows Connector.csproj
 ```
 
@@ -90,5 +90,5 @@ To export project to unity create android archive for connector sub module
 ```powershell
 cd .\backend\android
 ./gradlew :app:connector:assembleRelease   
-Copy-Item -Path .\app\connector\build\outputs\aar\connector-release.aar -Destination .\..\..\frontend\Unity\Assets\Plugins -Force
+Copy-Item -Path .\app\connector\build\outputs\aar\connector-release.aar -Destination .\..\..\frontend\Unity\Assets\Plugins\Android -Force
 ```
