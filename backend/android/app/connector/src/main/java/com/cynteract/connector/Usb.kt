@@ -23,7 +23,7 @@ class Usb : BroadcastReceiver(), HardwareInterface {
     class SerialDevice {
         lateinit var driver: UsbSerialDriver
         lateinit var serial: UsbSerialPort
-        var readThread: Thread? = null
+        lateinit var readThread: Thread
         val packageReadBuffer = PackageReadBuffer()
         val packageSendBuffer = ByteArray(Protocol.DATA_SEND_SIZE)
         val writeLock = Any()
@@ -60,11 +60,7 @@ class Usb : BroadcastReceiver(), HardwareInterface {
         // register Receiver for USB events
         context.registerReceiver(
             this,
-            IntentFilter(UsbManager.ACTION_USB_DEVICE_ATTACHED)
-        )
-        context.registerReceiver(
-            this,
-            IntentFilter(UsbManager.ACTION_USB_DEVICE_DETACHED)
+            IntentFilter("android.hardware.usb.action.USB_STATE")
         )
 
         usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
@@ -75,7 +71,6 @@ class Usb : BroadcastReceiver(), HardwareInterface {
 
     override fun startScan(context: Context) {
         val availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(usbManager)
-        Log.d("USB", "Available drivers: ${availableDrivers.size}")
         var driver: UsbSerialDriver? = null
         // request permission for usb device
         if (!availableDrivers.isEmpty()) {
@@ -92,19 +87,19 @@ class Usb : BroadcastReceiver(), HardwareInterface {
         // new device found
         if (device == null && driver != null) {
             //initialize device
-            device = SerialDevice()
-            device?.driver = driver
-            device?.serial = driver.ports[0]
+            val device = SerialDevice()
+            device.driver = driver
+            device.serial = driver.ports[0]
+            device.readThread = Thread { readRoutine() }
+            this.device = device
         }
 
         // device disconnected
         if (device != null && driver == null) {
-            onDeviceDisconnected?.invoke(this, "USB")
-            device?.readThread?.interrupt()
-            device = null
+            stopDevice()
         }
-
     }
+
 
     private fun startDevice(device: SerialDevice) {
         Log.d("USB", "Starting device")
@@ -120,8 +115,7 @@ class Usb : BroadcastReceiver(), HardwareInterface {
             )
             onDeviceConnected?.invoke(this, "USB")
             Log.d("USB", "Device connected")
-            device.readThread = Thread { readRoutine() }
-            device.readThread?.start()
+            device.readThread.start()
 
         } catch (e: IOException) {
             onDeviceError?.invoke(this, "USB", "Error opening device: ${e.message}")
@@ -129,26 +123,47 @@ class Usb : BroadcastReceiver(), HardwareInterface {
 
     }
 
+    // safely disconnect device
+    private fun stopDevice() {
+        val device = this.device
+        if (device != null) {
+            onDeviceDisconnected?.invoke(this, "USB")
+            try {
+                device.serial.close()
+            } catch (e: IOException) {
+            }
+            device.readThread.interrupt()
+            this.device = null
+        }
+    }
+
     private fun readRoutine() {
-        val device = device!!
+        val device = this.device!!
         val buffer = ByteArray(512)
         var numBytesRead: Int
         while (!Thread.currentThread().isInterrupted) {
-            synchronized(device.writeLock) {
-                try {
-                    numBytesRead = device.serial.read(buffer, 1000)
-                    for (i in 0 until numBytesRead) {
-                        readPackage("USB", buffer[i], device.packageReadBuffer)
-                    }
-                } catch (e: IOException) {
-                    onDeviceError?.invoke(this, "USB", "Error reading device: ${e.message}")
-                    // check if the device is still connected
-//                    onDeviceDisconnected?.invoke(this, "USB")
-//                    device.readThread?.interrupt()
-//                    this.device = null
-                }
-            }
             try {
+                synchronized(device.writeLock) {
+                    try {
+                        numBytesRead = device.serial.read(buffer, 1000)
+                        for (i in 0 until numBytesRead) {
+                            readPackage("USB", buffer[i], device.packageReadBuffer)
+                        }
+                    } catch (e: IOException) {
+                        onDeviceError?.invoke(this, "USB", "Error reading device: ${e.message}")
+                        // check if the device is still connected
+                        val availableDrivers =
+                            UsbSerialProber.getDefaultProber().findAllDrivers(usbManager)
+                        if (availableDrivers.isEmpty()) {
+                            stopDevice()
+                            // exit read thread
+                            return
+                        } else {
+                            // wait longer, probably the disconnect event will kick in
+                            Thread.sleep(1000)
+                        }
+                    }
+                }
                 Thread.sleep(5)
             } catch (e: InterruptedException) {
             }
@@ -233,12 +248,15 @@ class Usb : BroadcastReceiver(), HardwareInterface {
 
     override fun onReceive(context: Context?, intent: Intent?) {
         val action = intent?.action
-        if (UsbManager.ACTION_USB_DEVICE_ATTACHED == action) {
-            startScan(context!!)
-        } else if (UsbManager.ACTION_USB_DEVICE_DETACHED == action) {
-            startScan(context!!)
+        if ("android.hardware.usb.action.USB_STATE" == action) {
+            if (intent.extras?.getBoolean("connected", false) == true) {
+                // connected
+                startScan(context!!)
+            } else {
+                // disconnected
+                startScan(context!!)
+            }
         } else if (ACTION_USB_PERMISSION == action) {
-            context?.unregisterReceiver(this)
             val granted =
                 usbManager.hasPermission(device?.driver?.device)//intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)
 
