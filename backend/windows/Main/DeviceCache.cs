@@ -113,7 +113,8 @@ namespace Main
                 if (device.information == null)
                 {
                     device.information = information;
-                    device.version = information.version ?? "1";
+                    information.version = information.version ?? "1";
+                    device.version = information.version;
                     OnMessageOut?.Invoke(new Message.Connect()
                     {
                         deviceId = deviceId,

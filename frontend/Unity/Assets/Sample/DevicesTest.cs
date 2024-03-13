@@ -9,7 +9,8 @@ public class DevicesTest : MonoBehaviour
     {
         Debug.Log("Starting");
         devices.OnError += Debug.Log;
-        devices.OnNewDevice += (device) =>
+
+        devices.OnNewDevice += (device) => 
         {
             Debug.Log("New device " + device.Id);
             device.OnConnected += () => Debug.Log("Connected " + device.Id);
@@ -21,6 +22,7 @@ public class DevicesTest : MonoBehaviour
         devices.Start();
         // windowsDevices.TriggerScan();
     }
+    
     void OnDisable()
     {
         devices.Stop();

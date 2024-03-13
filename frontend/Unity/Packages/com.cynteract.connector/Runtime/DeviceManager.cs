@@ -118,7 +118,7 @@ namespace Connector
         {
             try
             {
-                Debug.Log(messageString);
+                //Debug.Log(messageString);
                 // deserialize twice as described in https://docs.unity3d.com/2020.1/Documentation/Manual/JSONSerialization.html
                 Message message = Message.FromJson(messageString);
                 Device? device = null;
@@ -127,11 +127,14 @@ namespace Connector
                 switch (message)
                 {
                     case Message.Connect connectMessage:
-                        device = (Device)devices[connectMessage.deviceId];
-                        if (device != null)
+                        if (devices.ContainsKey(connectMessage.deviceId))
                         {
-                            device.IsConnected = true;
-                            device.RaiseConnected();
+                            device = (Device)devices[connectMessage.deviceId];
+                            if (device != null)
+                            {
+                                device.IsConnected = true;
+                                device.RaiseConnected();
+                            }
                         }
                         else
                         {
@@ -141,7 +144,6 @@ namespace Connector
                                 "Rechts" => DeviceType.Right,
                                 _ => DeviceType.Beacon
                             };
-
                             ConnectionType connectionType = connectMessage.connectionType switch
                             {
                                 "usb" => ConnectionType.Usb,
@@ -168,24 +170,24 @@ namespace Connector
                             );
 
                             devices.Add(connectMessage.deviceId, device);
+                            Debug.Log("Invoking OnNewDevice");
                             OnNewDevice?.Invoke(device);
                             device.RaiseConnected();
                         }
                         break;
 
                     case Message.Disconnect disconnectMessage:
-                        device = (Device)devices[disconnectMessage.deviceId];
-                        if (device == null)
+                        if (!devices.ContainsKey(disconnectMessage.deviceId))
                             throw new Exception("Received disconnect for an unknown device: " + disconnectMessage.deviceId);
-
+                        device = (Device)devices[disconnectMessage.deviceId];
                         device.IsConnected = false;
                         device.RaiseDisconnected();
                         break;
 
                     case Message.Data dataMessage:
-                        device = (Device)devices[dataMessage.deviceId];
-                        if (device == null)
+                        if (!devices.ContainsKey(dataMessage.deviceId))
                             throw new Exception("Received data for an unknown device: " + dataMessage.deviceId);
+                        device = (Device)devices[dataMessage.deviceId];
                         device.RaiseData(dataMessage.data);
                         device.LastData = dataMessage.data;
                         break;
