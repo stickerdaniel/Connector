@@ -13,7 +13,7 @@ namespace Connector {
     {
         Process? process;
 
-        public void Start(DeviceManager devicesImpl)
+        public void Start(DeviceManager deviceManager)
         {
             process = new Process();
             process.StartInfo.FileName = Application.dataPath + "./Plugins/Windows/Connector.exe";
@@ -31,9 +31,9 @@ namespace Connector {
                 if (args.Data == null)
                     return;
 
-                devicesImpl.OnMessage(args.Data);
+                deviceManager.OnMessage(args.Data);
             };
-            process.ErrorDataReceived += (sender, args) => devicesImpl.RaiseError(new Exception(args.Data));
+            process.ErrorDataReceived += (sender, args) => deviceManager.RaiseError(new Exception(args.Data));
 
             process.Start();
 

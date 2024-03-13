@@ -11,7 +11,7 @@ android {
         applicationId = "com.cynteract.connector"
         versionCode = 1
         versionName = "1.0"
-        minSdk = 32
+        minSdk = 31
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

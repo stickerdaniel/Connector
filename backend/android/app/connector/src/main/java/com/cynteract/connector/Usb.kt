@@ -57,10 +57,16 @@ class Usb : BroadcastReceiver(), HardwareInterface {
             context, this, IntentFilter(ACTION_USB_PERMISSION),
             ContextCompat.RECEIVER_NOT_EXPORTED
         )
-        //LocalBroadcastManager.getInstance(context)
-        context.registerReceiver(this, IntentFilter(UsbManager.ACTION_USB_DEVICE_ATTACHED))
-        //LocalBroadcastManager.getInstance(context)
-        context.registerReceiver(this, IntentFilter(UsbManager.ACTION_USB_DEVICE_DETACHED))
+        // register Receiver for USB events
+        context.registerReceiver(
+            this,
+            IntentFilter(UsbManager.ACTION_USB_DEVICE_ATTACHED)
+        )
+        context.registerReceiver(
+            this,
+            IntentFilter(UsbManager.ACTION_USB_DEVICE_DETACHED)
+        )
+
         usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
 
         startScan(context)
@@ -68,28 +74,31 @@ class Usb : BroadcastReceiver(), HardwareInterface {
 
 
     override fun startScan(context: Context) {
-
         val availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(usbManager)
         Log.d("USB", "Available drivers: ${availableDrivers.size}")
-        if (availableDrivers.isEmpty()) {
-            return
+        var driver: UsbSerialDriver? = null
+        // request permission for usb device
+        if (!availableDrivers.isEmpty()) {
+            driver = availableDrivers[0]
+            val permissionIntent = PendingIntent.getBroadcast(
+                context,
+                0,
+                Intent(ACTION_USB_PERMISSION),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+            usbManager.requestPermission(driver.device, permissionIntent)
         }
-        val driver = availableDrivers[0]
 
-        val permissionIntent = PendingIntent.getBroadcast(
-            context,
-            0,
-            Intent(ACTION_USB_PERMISSION),
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-        usbManager.requestPermission(driver.device, permissionIntent)
-
-        if (device == null) {
+        // new device found
+        if (device == null && driver != null) {
             //initialize device
             device = SerialDevice()
             device?.driver = driver
             device?.serial = driver.ports[0]
-        } else {
+        }
+
+        // device disconnected
+        if (device != null && driver == null) {
             onDeviceDisconnected?.invoke(this, "USB")
             device?.readThread?.interrupt()
             device = null
@@ -100,7 +109,6 @@ class Usb : BroadcastReceiver(), HardwareInterface {
     private fun startDevice(device: SerialDevice) {
         Log.d("USB", "Starting device")
         try {
-
             val connection: UsbDeviceConnection = usbManager.openDevice(device.driver.device)
                 ?: throw IOException("Cannot open device")
             device.serial.open(connection)
@@ -122,17 +130,22 @@ class Usb : BroadcastReceiver(), HardwareInterface {
     }
 
     private fun readRoutine() {
+        val device = device!!
         val buffer = ByteArray(512)
         var numBytesRead: Int
         while (!Thread.currentThread().isInterrupted) {
-            synchronized(device!!.writeLock) {
+            synchronized(device.writeLock) {
                 try {
-                    numBytesRead = device?.serial?.read(buffer, 1000) ?: 0
+                    numBytesRead = device.serial.read(buffer, 1000)
                     for (i in 0 until numBytesRead) {
-                        readPackage("USB", buffer[i], device!!.packageReadBuffer)
+                        readPackage("USB", buffer[i], device.packageReadBuffer)
                     }
                 } catch (e: IOException) {
                     onDeviceError?.invoke(this, "USB", "Error reading device: ${e.message}")
+                    // check if the device is still connected
+//                    onDeviceDisconnected?.invoke(this, "USB")
+//                    device.readThread?.interrupt()
+//                    this.device = null
                 }
             }
             try {

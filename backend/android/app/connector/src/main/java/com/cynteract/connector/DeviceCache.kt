@@ -95,13 +95,13 @@ class DeviceCache(usb: HardwareInterface, bluetooth: HardwareInterface) {
             devices[deviceId]?.apply {
                 if (this.information == null) {
                     this.information = information
-                    version = information.version
+                    val version = information.version
                     onMessageOut?.invoke(
                         Message.Connect(
                             deviceId = deviceId,
                             connectionType = connectionType,
                             isConnected = isConnected,
-                            version = version!!,
+                            version = version,
                             information = this.information!!
                         )
                     )

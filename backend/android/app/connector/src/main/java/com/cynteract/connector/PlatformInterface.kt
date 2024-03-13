@@ -2,9 +2,7 @@ package com.cynteract.connector
 
 import kotlinx.serialization.Serializable
 
-// this file is the same as in the Unity frontend
-// nullable is not used as the "required" keyword is missing in Unity (C# 9)
-
+// this file is taken from the C# part
 
 @Serializable
 data class Dataframe(
@@ -65,7 +63,17 @@ open class Message(val type: String) {
     data class Error(val deviceId: String, val message: String) : Message("error")
 
     fun write(writer: (String) -> Unit) {
-        val json = JsonHelper.toJson(this)
+        // smart cast so that toJson will serialize all fields from the subclass
+        val json = when (this) {
+            is Scan -> JsonHelper.toJson(this)
+            is Connect -> JsonHelper.toJson(this)
+            is Disconnect -> JsonHelper.toJson(this)
+            is Data -> JsonHelper.toJson(this)
+            is Command -> JsonHelper.toJson(this)
+            is Debug -> JsonHelper.toJson(this)
+            is Error -> JsonHelper.toJson(this)
+            else -> throw Exception("Unknown message type: ${this.type}")
+        }
         synchronized(syncLock) {
             writer(json)
         }

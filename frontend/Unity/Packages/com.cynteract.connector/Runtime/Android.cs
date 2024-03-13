@@ -10,26 +10,26 @@ namespace Connector {
         AndroidJavaObject main;
         class MessageListener : AndroidJavaProxy
         {
-            DevicesImpl devicesImpl;
-            public MessageListener(DevicesImpl devicesImpl) : base("com.cynteract.connector.MessageListener")
+            DeviceManager deviceManager;
+            public MessageListener(DeviceManager deviceManager) : base("com.cynteract.connector.MessageListener")
             {
-                this.devicesImpl = devicesImpl;
+                this.deviceManager = deviceManager;
             }
 
             public void onMessageIn(string message)
             {
-                devicesImpl.OnMessage(message);
+                deviceManager.OnMessage(message);
             }
         }
 
-        public void Start(DevicesImpl devicesImpl)
+        public void Start(DeviceManager deviceManager)
         {
             AndroidJavaClass unityPlayerClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
             AndroidJavaObject unityActivity = unityPlayerClass.GetStatic<AndroidJavaObject>("currentActivity");
 
             // add message listener that
             main =
-            main = new AndroidJavaObject("com.cynteract.connector.Main", new MessageListener(devicesImpl));
+            main = new AndroidJavaObject("com.cynteract.connector.Main", new MessageListener(deviceManager));
             main.Call("initialize", unityActivity);
         }
 
