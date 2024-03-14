@@ -5,17 +5,15 @@ import kotlinx.serialization.json.Json
 
 object JsonHelper {
 
+    val json = Json { ignoreUnknownKeys = true }
+
     // ToJson function
     inline fun <reified T> toJson(obj: T): String {
-        // val json = Json(JsonConfiguration.Default.copy(classDiscriminator = "className"))
-
-        //val config = JsonConfiguration.Default.copy(classDiscriminator = "className")
-
-        return Json.encodeToString(obj)
+        return json.encodeToString(obj)
     }
 
     // FromJson function
-    inline fun <reified T> fromJson(json: String): T {
-        return Json.decodeFromString(json)
+    inline fun <reified T> fromJson(jsonString: String): T {
+        return json.decodeFromString(jsonString)
     }
 }

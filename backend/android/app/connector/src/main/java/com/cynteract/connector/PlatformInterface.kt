@@ -29,8 +29,7 @@ data class DeviceCommand(
 @Serializable
 data class Information(
     val Hand: String,
-    //Version field was missing in the first firmware
-    val version: String = "1"
+    val version: String = ""
 )
 
 @Serializable

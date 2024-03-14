@@ -27,7 +27,8 @@ class Usb : BroadcastReceiver(), HardwareInterface {
         val packageReadBuffer = PackageReadBuffer()
         val packageSendBuffer = ByteArray(Protocol.DATA_SEND_SIZE)
         val writeLock = Any()
-
+        // throttle sending data
+        var writeTimestamp = 0L
     }
 
     class PackageReadBuffer {
@@ -114,7 +115,6 @@ class Usb : BroadcastReceiver(), HardwareInterface {
                 UsbSerialPort.PARITY_NONE
             )
             onDeviceConnected?.invoke(this, "USB")
-            Log.d("USB", "Device connected")
             device.readThread.start()
 
         } catch (e: IOException) {
@@ -125,16 +125,14 @@ class Usb : BroadcastReceiver(), HardwareInterface {
 
     // safely disconnect device
     private fun stopDevice() {
-        val device = this.device
-        if (device != null) {
-            onDeviceDisconnected?.invoke(this, "USB")
-            try {
-                device.serial.close()
-            } catch (e: IOException) {
-            }
-            device.readThread.interrupt()
-            this.device = null
+        val device: SerialDevice = device ?: return
+        onDeviceDisconnected?.invoke(this, "USB")
+        try {
+            device.serial.close()
+        } catch (e: IOException) {
         }
+        device.readThread.interrupt()
+        this.device = null
     }
 
     private fun readRoutine() {
@@ -235,11 +233,19 @@ class Usb : BroadcastReceiver(), HardwareInterface {
 
     override fun sendData(id: String, data: DataSend) {
         val device: SerialDevice = device ?: return
+        // throttle data sending
+        val now = System.currentTimeMillis()
+        if (now - device.writeTimestamp < 10) {
+            onDeviceError?.invoke(this, "USB", "Dropped command due to throttling")
+            return
+        }
+        device.writeTimestamp = now
         data.serialize(device.packageSendBuffer)
-
         try {
             synchronized(device.writeLock) {
-                device.serial.write(device.packageSendBuffer, 1000)
+                device.serial.write(device.packageSendBuffer, 500)
+                device.serial.write(Protocol.PACKAGE_DELIM, 500)
+
             }
         } catch (e: IOException) {
             onDeviceError?.invoke(this, "USB", "Error writing data: ${e.message}")
@@ -259,9 +265,6 @@ class Usb : BroadcastReceiver(), HardwareInterface {
         } else if (ACTION_USB_PERMISSION == action) {
             val granted =
                 usbManager.hasPermission(device?.driver?.device)//intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)
-
-            Log.d("USB", " granted : $granted")
-            //log granted variable
 
             if (granted) {
                 device?.let { startDevice(it) }

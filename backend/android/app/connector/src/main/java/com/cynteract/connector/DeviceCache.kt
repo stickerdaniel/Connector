@@ -48,24 +48,23 @@ class DeviceCache(usb: HardwareInterface, bluetooth: HardwareInterface) {
 
     private fun HWOnDeviceConnected(sender: HardwareInterface, deviceId: String) {
         synchronized(messageLock) {
-            devices.computeIfAbsent(deviceId) {
+            val device = devices.computeIfAbsent(deviceId) {
                 Device(deviceId, sender.connectionType)
-            }.apply {
-                if (!isConnected) {
-                    isConnected = true
-                    if (information == null) {
-                        sender.requestInformation(deviceId)
-                    } else {
-                        onMessageOut?.invoke(
-                            Message.Connect(
-                                deviceId = deviceId,
-                                connectionType = connectionType,
-                                isConnected = isConnected,
-                                version = version!!,
-                                information = information!!
-                            )
+            }
+            if (!device.isConnected) {
+                device.isConnected = true
+                if (device.information == null) {
+                    sender.requestInformation(deviceId)
+                } else {
+                    onMessageOut?.invoke(
+                        Message.Connect(
+                            deviceId = deviceId,
+                            connectionType = device.connectionType,
+                            isConnected = device.isConnected,
+                            version = device.version!!,
+                            information = device.information!!
                         )
-                    }
+                    )
                 }
             }
         }
@@ -73,11 +72,10 @@ class DeviceCache(usb: HardwareInterface, bluetooth: HardwareInterface) {
 
     private fun HWOnDeviceDisconnected(sender: HardwareInterface, deviceId: String) {
         synchronized(messageLock) {
-            devices[deviceId]?.apply {
-                if (isConnected) {
-                    isConnected = false
-                    onMessageOut?.invoke(Message.Disconnect(deviceId = deviceId))
-                }
+            val device: Device = devices[deviceId] ?: return
+            if (device.isConnected) {
+                device.isConnected = false
+                onMessageOut?.invoke(Message.Disconnect(deviceId = deviceId))
             }
         }
     }
@@ -92,22 +90,31 @@ class DeviceCache(usb: HardwareInterface, bluetooth: HardwareInterface) {
         information: Information
     ) {
         synchronized(messageLock) {
-            devices[deviceId]?.apply {
-                if (this.information == null) {
-                    this.information = information
-                    val version = information.version
-                    onMessageOut?.invoke(
-                        Message.Connect(
-                            deviceId = deviceId,
-                            connectionType = connectionType,
-                            isConnected = isConnected,
-                            version = version,
-                            information = this.information!!
-                        )
+            val device: Device = devices[deviceId] ?: return
+            if (device.information == null) {
+                device.information = information
+                // field "version" was missing in v2 firmware
+                if (information.version == "") {
+                    val version = "1"
+                    device.information = Information(
+                        Hand = information.Hand,
+                        version = version,
                     )
+                    device.version = version
                 } else {
-                    this.information = information
+                    device.version = information.version
                 }
+                onMessageOut?.invoke(
+                    Message.Connect(
+                        deviceId = deviceId,
+                        connectionType = device.connectionType,
+                        isConnected = device.isConnected,
+                        version = device.information!!.version,
+                        information = device.information!!
+                    )
+                )
+            } else {
+                device.information = information
             }
         }
     }
@@ -115,8 +122,12 @@ class DeviceCache(usb: HardwareInterface, bluetooth: HardwareInterface) {
     private fun HWOnDeviceData(sender: HardwareInterface, deviceId: String, data: DataReceive) {
         // only propagate data after receiving information
         synchronized(messageLock) {
-            devices[deviceId]?.apply {
-                if (version != null) {
+            val device: Device = devices[deviceId] ?: return
+            if (device.information == null) {
+                // there was no information received yet, request it again
+                sender.requestInformation(deviceId)
+            } else
+                if (device.version == "1") {
                     onMessageOut?.invoke(
                         Message.Data(
                             deviceId = deviceId,
@@ -136,9 +147,9 @@ class DeviceCache(usb: HardwareInterface, bluetooth: HardwareInterface) {
                         )
                     )
                 }
-            }
         }
     }
+
 
     private fun HWOnDeviceDebug(sender: HardwareInterface, deviceId: String, message: String) {
         onMessageOut?.invoke(Message.Debug(deviceId = deviceId, message = message))
@@ -157,8 +168,9 @@ class DeviceCache(usb: HardwareInterface, bluetooth: HardwareInterface) {
             is Message.Command -> {
                 val deviceId = message.deviceId
                 synchronized(messageLock) {
-                    devices[deviceId]?.apply {
-                        if (isConnected && connectionType == ConnectionType.Usb.name) {
+                    val device = devices[deviceId]
+                    if (device != null) {
+                        if (device.isConnected && device.connectionType == ConnectionType.Usb.name) {
                             hwInterfaces.usb.sendData(
                                 deviceId, DataSend(
                                     vibration = message.command.vibration,
