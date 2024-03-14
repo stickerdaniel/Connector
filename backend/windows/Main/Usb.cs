@@ -8,7 +8,7 @@ using System.Linq;
 using System.Management;
 using System.Text.RegularExpressions;
 
-namespace Main
+namespace Connector
 {
 
     public class Usb : HardwareInterface
@@ -35,7 +35,7 @@ namespace Main
         Dictionary<string, UsbDevice> devices = new();
         readonly ManagementEventWatcher watcher = new();
 
-        public string ConnectionType => Main.ConnectionType.Usb;
+        public string ConnectionType => Connector.ConnectionType.Usb;
         public event Action<HardwareInterface, string> OnDeviceConnected;
         public event Action<HardwareInterface, string> OnDeviceDisconnected;
         public event Action<HardwareInterface, string, string> OnDeviceError;

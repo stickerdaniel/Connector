@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Main
+namespace Connector
 {
     public class Config
     {

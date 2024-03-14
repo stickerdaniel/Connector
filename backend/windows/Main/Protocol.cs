@@ -4,7 +4,7 @@
 using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
 
-namespace Main
+namespace Connector
 {
     [StructLayout(LayoutKind.Sequential)]
     public struct IMUData

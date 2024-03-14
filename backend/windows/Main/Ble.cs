@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.IO;
 
-namespace Main
+namespace Connector
 {
     public class Ble : HardwareInterface
     {
@@ -43,7 +43,7 @@ namespace Main
 
         byte[] packageSendBuffer;
 
-        public string ConnectionType => Main.ConnectionType.Bluetooth;
+        public string ConnectionType => Connector.ConnectionType.Bluetooth;
 
         public event Action<HardwareInterface, string> OnDeviceConnected;
         public event Action<HardwareInterface, string> OnDeviceDisconnected;

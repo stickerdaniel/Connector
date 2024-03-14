@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Main
+namespace Connector
 {
     /// <summary>
     /// Intermediate to the frontend:

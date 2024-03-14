@@ -8,7 +8,7 @@
 using System;
 using System.IO;
 
-namespace Main
+namespace Connector
 {
     public class Dataframe
     {

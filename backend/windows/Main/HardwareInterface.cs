@@ -1,6 +1,6 @@
 using System;
 
-namespace Main
+namespace Connector
 {
     public class ConnectionType
     {
