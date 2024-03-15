@@ -138,7 +138,7 @@ namespace Connector
                         }
                         else
                         {
-                            DeviceType deviceType = connectMessage.information.Hand switch
+                            DeviceType deviceType = connectMessage.information.hand switch
                             {
                                 "Links" => DeviceType.Left,
                                 "Rechts" => DeviceType.Right,

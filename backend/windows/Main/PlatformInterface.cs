@@ -3,6 +3,9 @@
 //      frontend\Unity\Assets\Scripts\Main\PlatformInterface.cs
 //
 // nullable is not used as the "required" keyword is missing in Unity (C# 9)
+//
+// Unity's JsonUtility needs the [Serializable] attribute
+//
 #nullable disable
 
 using System;
@@ -10,8 +13,10 @@ using System.IO;
 
 namespace Connector
 {
+    [Serializable]
     public class Dataframe
     {
+        [Serializable]
         public struct IMUData
         {
             public float x, y, z, w;
@@ -22,15 +27,17 @@ namespace Connector
         public byte[] vibStatus;
     }
 
+    [Serializable]
     public class DeviceCommand
     {
         public byte[] vibration;
         public byte[] vibrationPattern;
     }
 
+    [Serializable]
     public class Information
     {
-        public string Hand;
+        public string hand;
         public string version;
     }
 
