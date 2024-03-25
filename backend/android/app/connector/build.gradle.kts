@@ -6,10 +6,10 @@ plugins {
 
 android {
     namespace = "com.cynteract.connector"
-    compileSdk = 34
+    compileSdk = 33
 
     defaultConfig {
-        minSdk = 31
+        minSdk = 29
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -33,8 +33,8 @@ android {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("androidx.core:core-ktx:1.10.1")
+    implementation("androidx.appcompat:appcompat:1.0.2")
     implementation("com.github.mik3y:usb-serial-for-android:3.7.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 }

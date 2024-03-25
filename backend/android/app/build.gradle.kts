@@ -5,13 +5,13 @@ plugins {
 
 android {
     namespace = "com.cynteract.connector"
-    compileSdk = 34
+    compileSdk = 33
 
     defaultConfig {
         applicationId = "com.cynteract.connector"
         versionCode = 1
         versionName = "1.0"
-        minSdk = 31
+        minSdk = 29
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -50,10 +50,10 @@ android {
 
 dependencies {
     implementation(project(":app:connector"))
-    implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
-    implementation("androidx.activity:activity-compose:1.8.2")
-    implementation(platform("androidx.compose:compose-bom:2023.08.00"))
+    implementation("androidx.core:core-ktx:1.10.1")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx")
+    implementation("androidx.activity:activity-compose")
+    implementation(platform("androidx.compose:compose-bom:2022.12.00"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
@@ -61,9 +61,9 @@ dependencies {
     implementation("com.google.android.gms:play-services-nearby:19.1.0")
     implementation("org.chromium.net:cronet-embedded:119.6045.31")
     testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
-    androidTestImplementation(platform("androidx.compose:compose-bom:2023.08.00"))
+    androidTestImplementation("androidx.test.ext:junit")
+    androidTestImplementation("androidx.test.espresso:espresso-core")
+    androidTestImplementation(platform("androidx.compose:compose-bom:2022.12.00"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")

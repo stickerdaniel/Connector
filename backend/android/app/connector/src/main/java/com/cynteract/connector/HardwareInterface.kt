@@ -2,6 +2,11 @@ package com.cynteract.connector
 
 import android.content.Context
 
+object ConnectionType {
+    const val Usb = "usb"
+    const val Bluetooth = "bluetooth"
+}
+
 interface HardwareInterface {
 
     var onDeviceConnected: ((HardwareInterface, String) -> Unit)?

@@ -16,7 +16,7 @@ namespace Connector {
                 this.deviceManager = deviceManager;
             }
 
-            public void onMessageIn(string message)
+            public void onMessage(string message)
             {
                 deviceManager.OnMessage(message);
             }

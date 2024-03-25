@@ -8,7 +8,8 @@ using System;
 using System.Diagnostics;
 using UnityEngine;
 
-namespace Connector {
+namespace Connector
+{
     class PlatformSpecific
     {
         Process? process;
@@ -60,4 +61,31 @@ namespace Connector {
         }
     }
 }
+
+#elif UNITY_STANDALONE_WIN
+
+using System;
+using UnityEngine;
+
+namespace Connector
+{
+    class PlatformSpecific
+    {
+        public void Start(DeviceManager deviceManager)
+        {
+            throw new NotImplementedException("Windows export not supported yet.");
+        }
+
+        public void Stop()
+        {
+            throw new NotImplementedException("Windows export not supported yet.");
+        }
+
+        public void SendMessage(Message message)
+        {
+            throw new NotImplementedException("Windows export not supported yet.");
+        }
+    }
+}
+
 #endif

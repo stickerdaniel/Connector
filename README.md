@@ -72,7 +72,12 @@ The `windows.sln` is only kept in place because vscode won't highlight syntax er
 ## Android backend
 
 - Install android studio from https://developer.android.com/studio (~1.1GB).
-- In Android studio go to "Settings">"Languages & Frameworks">"Android SDK">"SDK Tools"> and install "Android SDK Platform-Tools"
+- In Android studio go to "File">"Settings">"Languages & Frameworks">"Android SDK"
+- If you already installed the android sdk with Unity, set the path of the sdk to Unity's android sdk. 
+    - Install android sdk 33. 
+    - If you get: "The SDK directory is not writable (C:\Program Files\Unity\Hub\Editor\2022.3.11f1\Editor\Data\PlaybackEngines\AndroidPlayer\SDK)", you need to grant write permissions.
+    - Rightlick on the SDK folder in windows explorer, go to "Properties">"Security">"Modify", select the currently logged in user and grant full access.
+- If you don't have Unity's android sdk installed, proceed to >"SDK Tools"> and install "Android SDK Platform-Tools".
 - Open project `./backend/android/connector` in android studio
 - Connect your smart phone to android studio via wireless debugging
     - In Android studio click on "Device manager" then click on "Pair device using wifi"

@@ -27,6 +27,7 @@ class Usb : BroadcastReceiver(), HardwareInterface {
         val packageReadBuffer = PackageReadBuffer()
         val packageSendBuffer = ByteArray(Protocol.DATA_SEND_SIZE)
         val writeLock = Any()
+
         // throttle sending data
         var writeTimestamp = 0L
     }
@@ -48,7 +49,7 @@ class Usb : BroadcastReceiver(), HardwareInterface {
     override var onDeviceDebug: ((HardwareInterface, String, String) -> Unit)? = null
 
 
-    override val connectionType: String = "USB"
+    override val connectionType: String = ConnectionType.Usb
 
 
     fun init(context: Context) {

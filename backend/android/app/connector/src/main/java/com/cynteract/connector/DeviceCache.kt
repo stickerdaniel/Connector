@@ -1,9 +1,5 @@
 package com.cynteract.connector
 
-enum class ConnectionType {
-    Usb,
-    Bluetooth
-}
 
 class DeviceCache(usb: HardwareInterface, bluetooth: HardwareInterface) {
 
@@ -158,7 +154,7 @@ class DeviceCache(usb: HardwareInterface, bluetooth: HardwareInterface) {
     fun onMessageIn(message: Message) {
         when (message) {
             is Message.Scan -> {
-                if (message.connectionType == ConnectionType.Usb.name) {
+                if (message.connectionType == ConnectionType.Usb) {
                     //hwInterfaces.usb.startScan()
                 }
                 // TODO: Handle Bluetooth
@@ -170,7 +166,7 @@ class DeviceCache(usb: HardwareInterface, bluetooth: HardwareInterface) {
                 synchronized(messageLock) {
                     val device = devices[deviceId]
                     if (device != null) {
-                        if (device.isConnected && device.connectionType == ConnectionType.Usb.name) {
+                        if (device.isConnected && device.connectionType == ConnectionType.Usb) {
                             hwInterfaces.usb.sendData(
                                 deviceId, DataSend(
                                     vibration = message.command.vibration,
