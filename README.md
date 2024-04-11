@@ -20,7 +20,8 @@ cd .\backend\windows
 dotnet publish -c Release -r win10-x64 --no-self-contained -o ../../frontend/Unity/Assets/Plugins/Windows Connector.csproj
 
 # compile android backend
-cd ..\android
+cd ..\..
+cd .\backend\android
 ./gradlew :app:connector:assembleRelease   
 Copy-Item -Path .\app\connector\build\outputs\aar\connector-release.aar -Destination .\..\..\frontend\Unity\Assets\Plugins\Android -Force
 ```
@@ -74,8 +75,8 @@ The `windows.sln` is only kept in place because vscode won't highlight syntax er
 - Install android studio from https://developer.android.com/studio (~1.1GB).
 - In Android studio go to "File">"Settings">"Languages & Frameworks">"Android SDK"
 - If you already installed the android sdk with Unity, set the path of the sdk to Unity's android sdk. 
-    - Install android sdk 33. 
-    - If you get: "The SDK directory is not writable (C:\Program Files\Unity\Hub\Editor\2022.3.11f1\Editor\Data\PlaybackEngines\AndroidPlayer\SDK)", you need to grant write permissions.
+    - Install android sdk 34. 
+    - If you get: "The SDK directory is not writable (C:\Program Files\Unity\Hub\Editor\2022.3.16f1\Editor\Data\PlaybackEngines\AndroidPlayer\SDK)", you need to grant write permissions.
     - Rightlick on the SDK folder in windows explorer, go to "Properties">"Security">"Modify", select the currently logged in user and grant full access.
 - If you don't have Unity's android sdk installed, proceed to >"SDK Tools"> and install "Android SDK Platform-Tools".
 - Open project `./backend/android/connector` in android studio
