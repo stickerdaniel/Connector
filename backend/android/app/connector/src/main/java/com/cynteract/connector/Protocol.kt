@@ -67,7 +67,7 @@ data class DataReceive(
 
     fun deserialize(bytes: ByteArray) {
         val bb = ByteBuffer.wrap(bytes)
-        bb.order(ByteOrder.BIG_ENDIAN) // or LITTLE_ENDIAN
+        bb.order(ByteOrder.LITTLE_ENDIAN) // or LITTLE_ENDIAN
         bb.get(header)
         for (i in 0 until 8) {
             force[i] = bb.getShort()
