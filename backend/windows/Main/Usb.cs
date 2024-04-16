@@ -72,8 +72,17 @@ namespace Connector
             {
                 string pnpDeviceID = queryObj["PNPDeviceID"].ToString();
                 string portName = queryObj["DeviceID"].ToString();
-                if (pnpDeviceID.Contains("VID_10C4") && pnpDeviceID.Contains("PID_EA60"))
+                if (
+                    //V2
+                    (pnpDeviceID.Contains("VID_10C4") && pnpDeviceID.Contains("PID_EA60"))
+                    ||
+                    //V3
+                    (pnpDeviceID.Contains("VID_303A") && pnpDeviceID.Contains("PID_1001"))
+                    )
+                {
+
                     ports.Add(portName);
+                }
 
             }
             foreach (var portName in ports.Except(devices.Keys))
