@@ -10,7 +10,7 @@ public class JsonHelper
     {
         var options = new JsonSerializerOptions
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            // PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             IncludeFields = true,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         };

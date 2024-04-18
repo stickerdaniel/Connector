@@ -48,7 +48,7 @@ namespace Connector
         public event Action<HardwareInterface, string> OnDeviceConnected;
         public event Action<HardwareInterface, string> OnDeviceDisconnected;
         public event Action<HardwareInterface, string, string> OnDeviceError;
-        public event Action<HardwareInterface, string, Information> OnDeviceInformation;
+        public event Action<HardwareInterface, string, InformationV1In> OnDeviceInformation;
         public event Action<HardwareInterface, string, DataReceive> OnDeviceData;
         public event Action<HardwareInterface, string, string> OnDeviceDebug;
 
@@ -186,7 +186,7 @@ namespace Connector
                 if (data.Length > 512)
                     throw new ArgumentOutOfRangeException("please keep your ble package at a size of maximum 512, cf. spec!");
                 string informationReceive = Encoding.ASCII.GetString(data);
-                Information information = JsonHelper.FromJson<Information>(informationReceive);
+                InformationV1In information = JsonHelper.FromJson<InformationV1In>(informationReceive);
                 OnDeviceInformation?.Invoke(this, sender.Service.DeviceId, information);
             }
             else if (uuid == Config.UUID_MAP["debug"])
@@ -213,7 +213,7 @@ namespace Connector
                 if (result.Status != GattCommunicationStatus.Success)
                     throw new Exception(String.Format("Error reading information characteristic: {0}", result.Status));
                 string informationReceive = Encoding.ASCII.GetString(result.Value.ToArray());
-                Information information = JsonHelper.FromJson<Information>(informationReceive);
+                InformationV1In information = JsonHelper.FromJson<InformationV1In>(informationReceive);
                 OnDeviceInformation?.Invoke(this, id, information);
             });
         }

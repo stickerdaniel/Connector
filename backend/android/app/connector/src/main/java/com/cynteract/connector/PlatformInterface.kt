@@ -27,10 +27,21 @@ data class DeviceCommand(
 )
 
 @Serializable
-data class Information(
+data class InformationV1In(
     val Hand: String,
-    val version: String = ""
+    val version: String = "",
+    val Vibration: Map<String, String>,
+    val IMU: Map<String, String>
 )
+
+@Serializable
+data class InformationV1Out(
+    var hand: String,
+    var version: String,
+    var vibration: List<String>,
+    var imu: List<String>
+)
+
 
 @Serializable
 open class Message(val type: String) {
@@ -43,7 +54,7 @@ open class Message(val type: String) {
         val connectionType: String,
         val isConnected: Boolean,
         val version: String,
-        val information: Information
+        val information: InformationV1Out
     ) : Message("connect")
 
     @Serializable

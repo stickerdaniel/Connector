@@ -39,7 +39,7 @@ namespace Connector
         public event Action<HardwareInterface, string> OnDeviceConnected;
         public event Action<HardwareInterface, string> OnDeviceDisconnected;
         public event Action<HardwareInterface, string, string> OnDeviceError;
-        public event Action<HardwareInterface, string, Information> OnDeviceInformation;
+        public event Action<HardwareInterface, string, InformationV1In> OnDeviceInformation;
         public event Action<HardwareInterface, string, DataReceive> OnDeviceData;
         public event Action<HardwareInterface, string, string> OnDeviceDebug;
 
@@ -229,7 +229,7 @@ namespace Connector
                         string information = Encoding.ASCII.GetString(buffer.data, 0, buffer.offset - Protocol.PACKAGE_DELIM.Length);
                         // unstrip double quotes to create valid json again
                         string json = Regex.Replace(information, @"[\w]+", (m) => '"' + m.ToString() + '"');
-                        Information deserialized = JsonHelper.FromJson<Information>(json);
+                        InformationV1In deserialized = JsonHelper.FromJson<InformationV1In>(json);
                         OnDeviceInformation?.Invoke(this, id, deserialized);
                     }
 

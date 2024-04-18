@@ -11,7 +11,7 @@ class DeviceCache(usb: HardwareInterface, bluetooth: HardwareInterface) {
         val connectionType: String,
         var isConnected: Boolean = false,
         var version: String? = null,
-        var information: Information? = null
+        var information: InformationV1Out? = null
     )
 
     private val devices = mutableMapOf<String, Device>()
@@ -80,26 +80,35 @@ class DeviceCache(usb: HardwareInterface, bluetooth: HardwareInterface) {
         onMessageOut?.invoke(Message.Error(deviceId = deviceId, message = message))
     }
 
+    private fun transformIndexDictToList(dict: Map<String, String>): List<String> {
+        val maxKey = dict.keys.map { it.toInt() }.maxOrNull() ?: 0
+        val list = MutableList(maxKey + 1) { "" }
+        for (item in dict) {
+            list[item.key.toInt()] = item.value
+        }
+        return list
+    }
+
+    private fun transformInformationV1InToOut(information: InformationV1In): InformationV1Out {
+        return InformationV1Out(
+            version = "1",
+            hand = information.Hand,
+            vibration = transformIndexDictToList(information.Vibration),
+            imu = transformIndexDictToList(information.IMU)
+        )
+    }
+
     private fun HWOnDeviceInformation(
         sender: HardwareInterface,
         deviceId: String,
-        information: Information
+        informationIn: InformationV1In
     ) {
         synchronized(messageLock) {
             val device: Device = devices[deviceId] ?: return
+            val informationOut: InformationV1Out = transformInformationV1InToOut(informationIn)
             if (device.information == null) {
-                device.information = information
-                // field "version" was missing in v2 firmware
-                if (information.version == "") {
-                    val version = "1"
-                    device.information = Information(
-                        Hand = information.Hand,
-                        version = version,
-                    )
-                    device.version = version
-                } else {
-                    device.version = information.version
-                }
+                device.information = informationOut
+                device.version = informationOut.version
                 onMessageOut?.invoke(
                     Message.Connect(
                         deviceId = deviceId,
@@ -110,7 +119,7 @@ class DeviceCache(usb: HardwareInterface, bluetooth: HardwareInterface) {
                     )
                 )
             } else {
-                device.information = information
+                device.information = informationOut
             }
         }
     }

@@ -9,6 +9,7 @@
 #nullable disable
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace Connector
@@ -34,13 +35,23 @@ namespace Connector
         public byte[] vibrationPattern;
     }
 
+    // Unity can't parse arbitrary Dictionary<string, string> with JsonUtility
     [Serializable]
-    public class Information
+    public class InformationV1In
+    {
+        public string Hand;
+        public string version;
+        public Dictionary<string, string> Vibration;
+        public Dictionary<string, string> IMU;
+    }
+    [Serializable]
+    public class InformationV1Out
     {
         public string hand;
         public string version;
+        public List<string> vibration;
+        public List<string> imu;
     }
-
     public class Message
     {
         public string type;
@@ -56,7 +67,7 @@ namespace Connector
             public string connectionType;
             public bool isConnected;
             public string version;
-            public Information information;
+            public InformationV1Out information;
             public Connect() { type = "connect"; }
         }
         public class Disconnect : Message

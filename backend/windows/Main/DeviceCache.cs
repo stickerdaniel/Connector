@@ -22,7 +22,7 @@ namespace Connector
             public required string connectionType;
             public required bool isConnected;
             public string? version;
-            public Information? information;
+            public InformationV1Out? information;
         }
         Dictionary<string, Device> devices = new();
         class HWInterfaces
@@ -105,16 +105,34 @@ namespace Connector
                 message = message
             });
         }
-        public void HWOnDeviceInformation(HardwareInterface sender, string deviceId, Information information)
+        private static List<string> TransformIndexDictToList(Dictionary<string, string> dict)
+        {
+            int maxKey = dict.Keys.Select(int.Parse).Max();
+            List<string> list = Enumerable.Repeat("", maxKey + 1).ToList();
+            foreach (var item in dict)
+                list[int.Parse(item.Key)] = item.Value;
+            return list;
+        }
+        private static InformationV1Out TransformInformationV1InToOut(InformationV1In information)
+        {
+            return new InformationV1Out()
+            {
+                version = "1",
+                hand = information.Hand,
+                vibration = TransformIndexDictToList(information.Vibration),
+                imu = TransformIndexDictToList(information.IMU)
+            };
+        }
+        public void HWOnDeviceInformation(HardwareInterface sender, string deviceId, InformationV1In informationIn)
         {
             if (devices.ContainsKey(deviceId))
             {
                 Device device = devices[deviceId];
+                InformationV1Out informationOut = TransformInformationV1InToOut(informationIn);
                 if (device.information == null)
                 {
-                    device.information = information;
-                    information.version = information.version ?? "1";
-                    device.version = information.version;
+                    device.information = informationOut;
+                    device.version = informationOut.version;
                     OnMessageOut?.Invoke(new Message.Connect()
                     {
                         deviceId = deviceId,
@@ -125,7 +143,7 @@ namespace Connector
                     });
                 }
                 else
-                    device.information = information;
+                    device.information = informationOut;
             }
         }
         public void HWOnDeviceData(HardwareInterface sender, string deviceId, DataReceive data)

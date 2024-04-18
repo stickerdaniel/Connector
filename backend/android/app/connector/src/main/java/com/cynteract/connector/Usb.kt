@@ -44,7 +44,7 @@ class Usb : BroadcastReceiver(), HardwareInterface {
     override var onDeviceConnected: ((HardwareInterface, String) -> Unit)? = null
     override var onDeviceDisconnected: ((HardwareInterface, String) -> Unit)? = null
     override var onDeviceError: ((HardwareInterface, String, String) -> Unit)? = null
-    override var onDeviceInformation: ((HardwareInterface, String, Information) -> Unit)? = null
+    override var onDeviceInformation: ((HardwareInterface, String, InformationV1In) -> Unit)? = null
     override var onDeviceData: ((HardwareInterface, String, DataReceive) -> Unit)? = null
     override var onDeviceDebug: ((HardwareInterface, String, String) -> Unit)? = null
 
@@ -220,7 +220,7 @@ class Usb : BroadcastReceiver(), HardwareInterface {
                     "\"${it.value}\""
                 }
 
-                val deserialized = JsonHelper.fromJson<Information>(json)
+                val deserialized = JsonHelper.fromJson<InformationV1In>(json)
                 onDeviceInformation?.invoke(this, id, deserialized)
             }
 

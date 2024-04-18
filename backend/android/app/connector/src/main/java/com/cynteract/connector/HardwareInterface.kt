@@ -13,7 +13,7 @@ interface HardwareInterface {
     var onDeviceDisconnected: ((HardwareInterface, String) -> Unit)?
 
     var onDeviceError: ((HardwareInterface, String, String) -> Unit)?
-    var onDeviceInformation: ((HardwareInterface, String, Information) -> Unit)?
+    var onDeviceInformation: ((HardwareInterface, String, InformationV1In) -> Unit)?
     var onDeviceData: ((HardwareInterface, String, DataReceive) -> Unit)?
     var onDeviceDebug: ((HardwareInterface, String, String) -> Unit)?
 

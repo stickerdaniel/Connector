@@ -9,6 +9,7 @@
 #nullable disable
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace Connector
@@ -39,6 +40,8 @@ namespace Connector
     {
         public string hand;
         public string version;
+        public List<string> vibration;
+        public List<string> imu;
     }
 
     public class Message

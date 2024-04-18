@@ -12,7 +12,7 @@ class Ble : HardwareInterface {
     override var onDeviceError: ((HardwareInterface, String, String) -> Unit)?
         get() = TODO("Not yet implemented")
         set(value) {}
-    override var onDeviceInformation: ((HardwareInterface, String, Information) -> Unit)?
+    override var onDeviceInformation: ((HardwareInterface, String, InformationV1In) -> Unit)?
         get() = TODO("Not yet implemented")
         set(value) {}
     override var onDeviceData: ((HardwareInterface, String, DataReceive) -> Unit)?
