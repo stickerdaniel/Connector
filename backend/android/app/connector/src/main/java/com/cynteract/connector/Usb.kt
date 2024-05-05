@@ -106,6 +106,7 @@ class Usb : BroadcastReceiver(), HardwareInterface {
     private fun startDevice(device: SerialDevice) {
         Log.d("USB", "Starting device")
         try {
+            //if (!device.serial.isOpen) {
             val connection: UsbDeviceConnection = usbManager.openDevice(device.driver.device)
                 ?: throw IOException("Cannot open device")
             device.serial.open(connection)
@@ -115,6 +116,7 @@ class Usb : BroadcastReceiver(), HardwareInterface {
                 UsbSerialPort.STOPBITS_1,
                 UsbSerialPort.PARITY_NONE
             )
+            //}
             onDeviceConnected?.invoke(this, "USB")
             device.readThread.start()
 

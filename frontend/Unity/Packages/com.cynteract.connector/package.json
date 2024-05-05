@@ -5,5 +5,6 @@
     "description": "Connecting the hardware devices to the Unity application",
     "unity": "2022.3",
     "documentationUrl": "https://github.com/Cynteract/Connector",
-    "author": "Cynteract"
+    "author": "Cynteract",
+    "postProcess": "Assets/Editor/PackageSetup.cs"
 }

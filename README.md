@@ -4,39 +4,18 @@ Library that connects to the hardware via USB or BLE.
 
 ## Unity Frontend
 
-To run the provided sample scene or to import the package into another Unity scene, you have to create the windows and android backend binaries first. Those binaries are not committed into git to keep the history clean. 
+Install https://cli.github.com/ and run `gh auth login`. Then open UPM and select "Add package from git URL...". Use the url https://github.com/Cynteract/Connector.git?path=/frontend/Unity/Packages/com.cynteract.connector#main . If you want to use a specific version, you specify it like this: https://github.com/Cynteract/Connector.git?path=/frontend/Unity/Packages/com.cynteract.connector#v1.0.0 .
 
-Install the .net 7 sdk (~200MB) from here: https://dotnet.microsoft.com/en-us/download/dotnet/7.0 . If you have a newer sdk installed, you can also use that. In that case you only need to download and install the ".NET Runtime 7.*" (~20MB) from that url.
-
-Install the android sdk. It is recommended to install android studio first and then install the android sdk via android studio. See [Android backend](#android-backend) on how to install the sdk via android studio.
-
-Clone this repository (`git clone git@github.com:Cynteract/Connector.git`), open powershell and run following commands:
-
-```powershell
-# powershell
-
-# compile windows backend
-cd .\backend\windows
-dotnet publish -c Release -r win10-x64 --no-self-contained -o ../../frontend/Unity/Assets/Plugins/Windows Connector.csproj
-
-# compile android backend
-cd ..\..
-cd .\backend\android
-./gradlew :app:connector:assembleRelease   
-Copy-Item -Path .\app\connector\build\outputs\aar\connector-release.aar -Destination .\..\..\frontend\Unity\Assets\Plugins\Android -Force
-```
-
-To run the included sample, open the Unity project `frontend/Unity` and run it. It will log all input from the backend. You can also build the android apk to check it on your android phone.
-
-To import the package into another Unity project, open Unity's Package Manager, click the "+"-button in the status bar, select "Add package from disk", navigate to `frontend\Unity\Packages\com.cynteract.connector` and double-click the `package.json` file in the file browser. Then copy the folder `frontend/Unity/Assets/Plugins` into the root of the `Assets` folder of the other Unity project. Those can not be imported via Unity's package manager yet. 
+If you want to develop on this repository, clone it from `https://github.com/Cynteract/Connector.git`. To run the included sample, open the Unity project `frontend/Unity` and run it. It will log all input from the backend. You can also build the android apk to check it on your android phone. You can also import the Connector package into another Unity project via UPM -> "Add package from disc..." -> select `frontend\Unity\Packages\com.cynteract.connector\package.json`. This will create a link and you can develop it while working on another Unity project.
 
 ## Windows Backend
 
 - Install vscode and the C# extension inside vscode.
-- Install the .net 7 sdk from here: https://dotnet.microsoft.com/en-us/download/dotnet .
+- Install the .NET 7 sdk (~200MB) from here: https://dotnet.microsoft.com/en-us/download/dotnet/7.0 . If you have a newer sdk installed, it's sufficient to install the ".NET Runtime 7.*" (~20MB) from that url. 
 - Run the program with `dotnet run`.
 - Debug the program with the "Play" button in vscode.
 - Run the test with `dotnet run test`.
+- Sync the binary to the Unity frontend with `.\tool.ps1 windows`.
 
 To reset the glove, you have to physically disconnect and reconnect it.
 
@@ -52,14 +31,6 @@ You can use following lines as sample-input for the program:
 // reset vibration
 {"type":"command","deviceId":"COM3","command":{"vibration":"AAAAAAAAAAAAAA==","vibrationPattern":"AAAAAAAAAAAAAA=="}}
 
-```
-
-To sync the program to the unity frontend, run:
-
-```powershell
-cd .\backend\windows
-Copy-Item -Path ".\Main\PlatformInterface.cs" -Destination "..\..\frontend\Unity\Packages\com.cynteract.connector\Runtime" -Force
-dotnet publish -c Release -r win10-x64 --no-self-contained -o ../../frontend/Unity/Assets/Plugins/Windows Connector.csproj
 ```
 
 To show all compiler warnings, run:
@@ -90,11 +61,15 @@ The `windows.sln` is only kept in place because vscode won't highlight syntax er
 - Open "Logcat", set filter to "package:com.cynteract.connector" to see all data logs and usb connection information
 - Connect Data glove to smart phone via USB
 
+Sync the android-archive to the Unity frontend with `.\tool.ps1 android`.
 
-To export project to unity create android archive for connector sub module
+## Releasing
+
+Install https://cli.github.com/ . Update the "version" field in `frontend\Unity\Packages\com.cynteract.connector\package.json`. Then run
 
 ```powershell
-cd .\backend\android
-./gradlew :app:connector:assembleRelease   
-Copy-Item -Path .\app\connector\build\outputs\aar\connector-release.aar -Destination .\..\..\frontend\Unity\Assets\Plugins\Android -Force
+# compile windows and android binaries
+.\tool.ps1 all
+# upload binaries to github
+.\tool.ps1 release
 ```

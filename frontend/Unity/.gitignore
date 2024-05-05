@@ -8,9 +8,7 @@
 /[Uu]ser[Ss]ettings/
 
 # binaries
-connector-release.aar
-Connector.exe
-Connector.pdb
+Assets/Connector/
 
 # Visual Studio / MonoDevelop generated
 /.vs

@@ -17,7 +17,7 @@ namespace Connector
         public void Start(DeviceManager deviceManager)
         {
             process = new Process();
-            process.StartInfo.FileName = Application.dataPath + "./Plugins/Windows/Connector.exe";
+            process.StartInfo.FileName = Application.dataPath + "./Connector/Connector.exe";
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.RedirectStandardOutput = true;
             process.StartInfo.RedirectStandardError = true;
