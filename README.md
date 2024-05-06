@@ -4,7 +4,7 @@ Library that connects to the hardware via USB or BLE.
 
 ## Unity Frontend
 
-Install https://cli.github.com/ and run `gh auth login`. Then open UPM and select "Add package from git URL...". Use the url https://github.com/Cynteract/Connector.git?path=/frontend/Unity/Packages/com.cynteract.connector#main . If you want to use a specific version, you specify it like this: https://github.com/Cynteract/Connector.git?path=/frontend/Unity/Packages/com.cynteract.connector#v1.0.0 .
+Install https://cli.github.com/ and run `gh auth login`. Then open UPM and select "Add package from git URL...". Use the url `https://github.com/Cynteract/Connector.git?path=/frontend/Unity/Packages/com.cynteract.connector#main` . If you want to use a specific version, you specify it like this: `https://github.com/Cynteract/Connector.git?path=/frontend/Unity/Packages/com.cynteract.connector#v1.0.0` .
 
 If you want to develop on this repository, clone it from `https://github.com/Cynteract/Connector.git`. To run the included sample, open the Unity project `frontend/Unity` and run it. It will log all input from the backend. You can also build the android apk to check it on your android phone. You can also import the Connector package into another Unity project via UPM -> "Add package from disc..." -> select `frontend\Unity\Packages\com.cynteract.connector\package.json`. This will create a link and you can develop it while working on another Unity project.
 
