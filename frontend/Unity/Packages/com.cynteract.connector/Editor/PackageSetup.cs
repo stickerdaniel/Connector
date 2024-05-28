@@ -10,7 +10,9 @@ using UnityEditor;
 [InitializeOnLoad]
 public static class PackageSetup
 {
-    static string downloadPath = "Assets/Connector";
+    static string downloadPathWindows = "Assets/StreamingAssets";
+
+    static string downloadPathAndroid = "Assets";
 
     static PackageSetup()
     {
@@ -82,55 +84,30 @@ public static class PackageSetup
     {
         string packageVersion = GetPackageVersion();
 
-        if (!AssetDatabase.IsValidFolder(downloadPath))
+        if (!AssetDatabase.IsValidFolder("Assets/StreamingAssets"))
         {
-            UnityEngine.Debug.Log("Creating Connector folder...");
-            AssetDatabase.CreateFolder("Assets", "Connector");
+            UnityEngine.Debug.Log("Creating StreamingAssets folder...");
+            AssetDatabase.CreateFolder("Assets", "StreamingAssets");
         }
-        string windowsPath = $"{downloadPath}/Connector.exe";
+        string windowsPath = $"{downloadPathWindows}/Connector.exe";
         if (!File.Exists(windowsPath))
         {
             UnityEngine.Debug.Log($"Downloading Connector.exe, version {packageVersion} for Windows...");
             // Download via gh-cli. You need to run `gh auth login` first.
-            string command = $"release download v{packageVersion} --repo Cynteract/Connector --pattern \"*.exe\" --dir {downloadPath}";
+            string command = $"release download v{packageVersion} --repo Cynteract/Connector --pattern \"*.exe\" --dir {downloadPathWindows}";
             string output = ExecuteCommand("gh", command);
             UnityEngine.Debug.Log(output);
-
-            // string downloadUrl = $"https://github.com/Cynteract/Connector/releases/download/v{packageVersion}/Connector.exe";
-            // using (var webClient = new System.Net.WebClient())
-            // {
-            //     try
-            //     {
-            //         webClient.DownloadFile(downloadUrl, windowsPath);
-            //     }
-            //     catch (System.Exception e)
-            //     {
-            //         UnityEngine.Debug.LogError($"Failed to download Connector.exe from {downloadUrl}: {e.Message}");
-            //     }
-            // }
         }
 
-        string androidPath = $"{downloadPath}/connector-release.aar";
+        string androidPath = $"{downloadPathAndroid}/connector-release.aar";
         if (!File.Exists(androidPath))
         {
             UnityEngine.Debug.Log($"Downloading Connector.aar, version {packageVersion} for Android...");
             // Download via gh-cli. You need to run `gh auth login` first.
-            string command = $"release download v{packageVersion} --repo Cynteract/Connector --pattern \"*.aar\" --dir {downloadPath}";
+            string command = $"release download v{packageVersion} --repo Cynteract/Connector --pattern \"*.aar\" --dir {downloadPathAndroid}";
             string output = ExecuteCommand("gh", command);
             UnityEngine.Debug.Log(output);
 
-            // string downloadUrl = $"https://github.com/Cynteract/Connector/releases/download/v{packageVersion}/connector-release.aar";
-            // using (var webClient = new System.Net.WebClient())
-            // {
-            //     try
-            //     {
-            //         webClient.DownloadFile(downloadUrl, androidPath);
-            //     }
-            //     catch (System.Exception e)
-            //     {
-            //         UnityEngine.Debug.LogError($"Failed to download connector-release.aar from {downloadUrl}: {e.Message}");
-            //     }
-            // }
         }
 
     }

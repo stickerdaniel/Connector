@@ -7,8 +7,7 @@
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
 
-# binaries
-Assets/Connector/
+
 
 # Visual Studio / MonoDevelop generated
 /.vs
@@ -36,3 +35,11 @@ sysinfo.txt
 
 # Asset meta data should only be ignored when the corresponding asset is also ignored
 !/[Aa]ssets/**/*.meta
+
+# binaries
+Connector.exe
+Connector.exe.meta
+Connector.pdb
+Connector.pdb.meta
+connector-release.aar
+connector-release.aar.meta

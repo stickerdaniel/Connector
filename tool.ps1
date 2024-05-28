@@ -6,16 +6,20 @@ param (
 function build_android {
     Write-Output "Building Android connector..."
     Push-Location .\backend\android
+    # use Unity Android SDK if not specified
+    if (-not $env:ANDROID_HOME) {
+        $env:ANDROID_HOME = "C:\Program Files\Unity\Hub\Editor\2022.3.16f1\Editor\Data\PlaybackEngines\AndroidPlayer\SDK"
+    }
     .\gradlew :app:connector:assembleRelease
     Write-Output "Copying Android connector to Unity project..."
-    Copy-Item -Path .\app\connector\build\outputs\aar\connector-release.aar -Destination .\..\..\frontend\Unity\Assets\Connector -Force
+    Copy-Item -Path .\app\connector\build\outputs\aar\connector-release.aar -Destination .\..\..\frontend\Unity\Assets -Force
     Pop-Location
 }
 
 function build_windows {
     Write-Output "Building Windows connector..."
     Push-Location .\backend\windows
-    dotnet publish -c Release -r win10-x64 --no-self-contained -o ../../frontend/Unity/Assets/Connector Connector.csproj
+    dotnet publish -c Release -r win10-x64 --no-self-contained -o ../../frontend/Unity/Assets/StreamingAssets Connector.csproj
     Pop-Location
 }
 
@@ -81,7 +85,7 @@ function upload_release {
     }
     git push origin $tag
     gh release delete $tag --yes
-    gh release create $tag --generate-notes frontend/Unity/Assets/Connector/connector-release.aar frontend/Unity/Assets/Connector/Connector.exe
+    gh release create $tag --generate-notes frontend/Unity/Assets/connector-release.aar frontend/Unity/Assets/StreamingAssets/Connector.exe
 }
 
 switch ($argument) {

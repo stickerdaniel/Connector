@@ -2,7 +2,7 @@
 // System.Diagnostic does not work in Windows export, only in editor
 // TODO: implement il2cpp compatible version of Process
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR || UNITY_STANDALONE_WIN
 
 using System;
 using System.Diagnostics;
@@ -17,13 +17,20 @@ namespace Connector
         public void Start(DeviceManager deviceManager)
         {
             process = new Process();
-            process.StartInfo.FileName = Application.dataPath + "./Connector/Connector.exe";
+            process.StartInfo.FileName = System.IO.Path.Combine(Application.streamingAssetsPath, "Connector.exe");
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.RedirectStandardOutput = true;
             process.StartInfo.RedirectStandardError = true;
             process.StartInfo.RedirectStandardInput = true;
+            if (Application.isEditor)
+            {
+                process.StartInfo.CreateNoWindow = false;
+            }
+            else
+            {
+                process.StartInfo.CreateNoWindow = true;
+            }
             // keep terminal window open in case Unity doesn't stop the process
-            process.StartInfo.CreateNoWindow = false;
 
             // process.OutputDataReceived += OnMessage;
             process.OutputDataReceived += (sender, args) =>
@@ -61,31 +68,4 @@ namespace Connector
         }
     }
 }
-
-#elif UNITY_STANDALONE_WIN
-
-using System;
-using UnityEngine;
-
-namespace Connector
-{
-    class PlatformSpecific
-    {
-        public void Start(DeviceManager deviceManager)
-        {
-            throw new NotImplementedException("Windows export not supported yet.");
-        }
-
-        public void Stop()
-        {
-            throw new NotImplementedException("Windows export not supported yet.");
-        }
-
-        public void SendMessage(Message message)
-        {
-            throw new NotImplementedException("Windows export not supported yet.");
-        }
-    }
-}
-
 #endif
