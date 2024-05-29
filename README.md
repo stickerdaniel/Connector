@@ -11,7 +11,8 @@ If you want to develop on this repository, clone it from `https://github.com/Cyn
 ## Windows Backend
 
 - Install vscode and the C# extension inside vscode.
-- Install the .NET 7 sdk (~200MB) from here: https://dotnet.microsoft.com/en-us/download/dotnet/7.0 . If you have a newer sdk installed, it's sufficient to install the ".NET Runtime 7.*" (~20MB) from that url. 
+- Install the .NET 8 sdk (~200MB) from here: https://dotnet.microsoft.com/en-us/download/dotnet/8.0 . If you have a newer sdk installed, it's sufficient to install the ".NET Runtime 8.\*" (~20MB) from that url.
+- Enable script execution in powershell. Open windows start menu, type "powershell" and run powershell as administrator. Then run `Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope CurrentUser`
 - Run the program with `dotnet run`.
 - Debug the program with the "Play" button in vscode.
 - Run the test with `dotnet run test`.
@@ -45,18 +46,18 @@ The `windows.sln` is only kept in place because vscode won't highlight syntax er
 
 - Install android studio from https://developer.android.com/studio (~1.1GB).
 - In Android studio go to "File">"Settings">"Languages & Frameworks">"Android SDK"
-- If you already installed the android sdk with Unity, set the path of the sdk to Unity's android sdk. 
-    - Install android sdk 34. 
-    - If you get: "The SDK directory is not writable (C:\Program Files\Unity\Hub\Editor\2022.3.16f1\Editor\Data\PlaybackEngines\AndroidPlayer\SDK)", you need to grant write permissions.
-    - Rightlick on the SDK folder in windows explorer, go to "Properties">"Security">"Modify", select the currently logged in user and grant full access.
+- If you already installed the android sdk with Unity, set the path of the sdk to Unity's android sdk.
+  - Install android sdk 34.
+  - If you get: "The SDK directory is not writable (C:\Program Files\Unity\Hub\Editor\2022.3.16f1\Editor\Data\PlaybackEngines\AndroidPlayer\SDK)", you need to grant write permissions.
+  - Rightlick on the SDK folder in windows explorer, go to "Properties">"Security">"Modify", select the currently logged in user and grant full access.
 - If you don't have Unity's android sdk installed, proceed to >"SDK Tools"> and install "Android SDK Platform-Tools".
 - Open project `./backend/android/connector` in android studio
 - Connect your smart phone to android studio via wireless debugging
-    - In Android studio click on "Device manager" then click on "Pair device using wifi"
-    - Now in Android smart phone, Make sure to enable developer options
-    - In "Settings">"Developer Options" turn on "Wireless debugging"
-    - You can choose any option to pair with project, It is convinent to use "Pair device with QR code" 
-    - Press on option "Pair device with  QR code", Now scan QR code which is visible in Android studio
+  - In Android studio click on "Device manager" then click on "Pair device using wifi"
+  - Now in Android smart phone, Make sure to enable developer options
+  - In "Settings">"Developer Options" turn on "Wireless debugging"
+  - You can choose any option to pair with project, It is convinent to use "Pair device with QR code"
+  - Press on option "Pair device with QR code", Now scan QR code which is visible in Android studio
 - After connecting press "Run app" button in Android studio to run app on your mobile phone
 - Open "Logcat", set filter to "package:com.cynteract.connector" to see all data logs and usb connection information
 - Connect Data glove to smart phone via USB
@@ -65,7 +66,7 @@ Sync the android-archive to the Unity frontend with `.\tool.ps1 android`.
 
 ## Releasing
 
-Install https://cli.github.com/ . Update the "version" field in `frontend\Unity\Packages\com.cynteract.connector\package.json`. Then run
+Enable powershell script execution as mentioned in [Windows Backend](#windows-backend). Install https://cli.github.com/ . Update the "version" field in `frontend\Unity\Packages\com.cynteract.connector\package.json`. Then run
 
 ```powershell
 # compile windows and android binaries
