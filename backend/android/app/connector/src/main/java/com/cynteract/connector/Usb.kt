@@ -40,6 +40,7 @@ class Usb : BroadcastReceiver(), HardwareInterface {
 
     var device: SerialDevice? = null
 
+    private val scanLock=Any()
 
     override var onDeviceConnected: ((HardwareInterface, String) -> Unit)? = null
     override var onDeviceDisconnected: ((HardwareInterface, String) -> Unit)? = null
@@ -53,11 +54,10 @@ class Usb : BroadcastReceiver(), HardwareInterface {
 
 
     fun init(context: Context) {
-
         //LocalBroadcastManager.getInstance(context)
         ContextCompat.registerReceiver(
             context, this, IntentFilter(ACTION_USB_PERMISSION),
-            ContextCompat.RECEIVER_NOT_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED
         )
         // register Receiver for USB events
         context.registerReceiver(
@@ -72,6 +72,7 @@ class Usb : BroadcastReceiver(), HardwareInterface {
 
 
     override fun startScan(context: Context) {
+        synchronized(scanLock){
         val availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(usbManager)
         var driver: UsbSerialDriver? = null
         // request permission for usb device
@@ -99,6 +100,7 @@ class Usb : BroadcastReceiver(), HardwareInterface {
         // device disconnected
         if (device != null && driver == null) {
             stopDevice()
+            }
         }
     }
 
@@ -257,6 +259,9 @@ class Usb : BroadcastReceiver(), HardwareInterface {
 
     override fun onReceive(context: Context?, intent: Intent?) {
         val action = intent?.action
+        if(!this::usbManager.isInitialized){
+            usbManager = context!!.getSystemService(Context.USB_SERVICE) as UsbManager
+        }
         if ("android.hardware.usb.action.USB_STATE" == action) {
             if (intent.extras?.getBoolean("connected", false) == true) {
                 // connected
