@@ -17,6 +17,7 @@ namespace Connector
 
     class DeviceManager : IDeviceManager
     {
+        private Dictionary<string, (DateTime lastLoggedTime, int count)> messageLog = new Dictionary<string, (DateTime, int)>();
         class Device : IDevice
         {
             public string Id { get; set; }
@@ -193,8 +194,41 @@ namespace Connector
                         break;
 
                     case Message.Debug debugMessage:
-                        Debug.Log("Debug: " + debugMessage.message);
+                        {
+                            // Debug.Log("Debug: " + debugMessage.message);
+
+                            int seconds = 5;
+                            string messagetext = debugMessage.message;
+                            DateTime now = DateTime.Now;
+
+                            // Check if the message has been logged before and if it's within the last second
+                            if (messageLog.TryGetValue(messagetext, out var logData) && (now - logData.lastLoggedTime).TotalSeconds <= seconds)
+                                messageLog[messagetext] = (logData.lastLoggedTime, logData.count + 1);
+                            else
+                            {
+                                if (logData.count > 1)
+                                    Debug.Log($"Debug: {messagetext} (x{logData.count})");
+                                messageLog[messagetext] = (now, 1);
+                            }
+                            // Periodically, outside the case block, you need to check and log any messages that were counted but not logged yet
+                            // This could be done in an Update method or a separate timer-based mechanism
+                            foreach (var key in messageLog.Keys.ToList())
+                            {
+                                var data = messageLog[key];
+                                if ((now - data.lastLoggedTime).TotalSeconds > seconds && data.count > 1)
+                                {
+                                    Debug.Log($"Debug: {key} (x{data.count})");
+                                    messageLog.Remove(key); // Reset after logging
+                                }
+                                else if ((now - data.lastLoggedTime).TotalSeconds > seconds)
+                                {
+                                    // Remove old entries that were already logged as single messages
+                                    messageLog.Remove(key);
+                                }
+                            }
+                        }
                         break;
+
 
                     case Message.Error errorMessage:
                         Exception e = new Exception(errorMessage.message);
