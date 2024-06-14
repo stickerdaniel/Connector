@@ -7,9 +7,12 @@ function build_android {
     Write-Output "Building Android connector..."
     Push-Location .\backend\android
     # use Unity Android SDK if not specified
-    if(-not $env:JAVE_HOME) {
+    if (-not $env:JAVE_HOME) {
         $env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
-        #$env:JAVA_HOME = "C:\Program Files\Unity\Hub\Editor\2022.3.16f1\Editor\Data\PlaybackEngines\AndroidPlayer\OpenJDK"
+        # Unity Java is outdated
+        # > Android Gradle plugin requires Java 17 to run. You are currently using Java 11.
+        #   Your current JDK is located in C:\Program Files\Unity\Hub\Editor\2022.3.16f1\Editor\Data\PlaybackEngines\AndroidPlayer\OpenJDK
+        # $env:JAVA_HOME = "C:\Program Files\Unity\Hub\Editor\2022.3.16f1\Editor\Data\PlaybackEngines\AndroidPlayer\OpenJDK"
     }
     if (-not $env:ANDROID_HOME) {
         $env:ANDROID_HOME = "C:\Program Files\Unity\Hub\Editor\2022.3.16f1\Editor\Data\PlaybackEngines\AndroidPlayer\SDK"

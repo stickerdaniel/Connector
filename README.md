@@ -8,6 +8,18 @@ Install https://cli.github.com/ and run `gh auth login`. Then open UPM and selec
 
 If you want to develop on this repository, clone it from `https://github.com/Cynteract/Connector.git`. To run the included sample, open the Unity project `frontend/Unity` and run it. It will log all input from the backend. You can also build the android apk to check it on your android phone. You can also import the Connector package into another Unity project via UPM -> "Add package from disc..." -> select `frontend\Unity\Packages\com.cynteract.connector\package.json`. This will create a link and you can develop it while working on another Unity project.
 
+To debug the Unity scene on Android:
+1. Open Windows Search and type "Environment variables". Select "Settings environmental variables" 
+2. Select "path" and click on "Edit".
+3. Now add the path to your Unity SDK folder as following: C:\Program Files\Unity\Hub\Editor\2022.3.16f1\Editor\Data\PlaybackEngines\AndroidPlayer\SDK\platform-tools
+4. Enable Developer Mode on your Android device and enable "USB Debugging".
+5. Open powershell and connect your phone via USB. Execute "adb devices" to confirm your device is connected.
+6. Then run `adb tcpip 5555`. Check the IP Address in your phone's settings.
+7. Run `adb connect 192.XXX.XXX.XXX`. Use your phone's IP Address.
+8. Open Unity and switch to Android Platform in Build Settings. 
+9. Select your phone in "Run Device" and then "Build and Run".
+10. When finished Logcat will automatically open and display Debug Information. Start the App on the phone.
+
 ## Windows Backend
 
 - Install vscode and the C# extension inside vscode.
