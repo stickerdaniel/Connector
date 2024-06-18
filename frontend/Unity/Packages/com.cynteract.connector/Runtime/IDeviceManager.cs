@@ -37,10 +37,12 @@ namespace Connector
         ConnectionType ConnectionType { get; }
         Dataframe? LastData { get; }
         bool IsConnected { get; }
+        bool IsReady { get; }
         void SendCommand(DeviceCommand data);
         event Action<Dataframe> OnData;
         event Action OnDisconnected;
         event Action OnConnected;
+        event Action OnReady;
         event Action<Exception> OnError;
     }
 }

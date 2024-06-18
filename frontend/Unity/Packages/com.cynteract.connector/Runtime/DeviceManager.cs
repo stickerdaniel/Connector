@@ -27,10 +27,12 @@ namespace Connector
             public ConnectionType ConnectionType { get; set; }
             public Dataframe? LastData { get; set; }
             public bool IsConnected { get; set; }
+            public bool IsReady { get; set; }
 
             public event Action<Dataframe>? OnData;
             public event Action? OnDisconnected;
             public event Action? OnConnected;
+            public event Action? OnReady;
             public event Action<Exception>? OnError;
 
 
@@ -43,6 +45,11 @@ namespace Connector
             public void RaiseConnected()
             {
                 OnConnected?.Invoke();
+            }
+
+            public void RaiseReady()
+            {
+                OnReady?.Invoke();
             }
 
             public void RaiseDisconnected()
@@ -62,7 +69,7 @@ namespace Connector
 
             public Action<DeviceCommand> sendData;
 
-            public Device(string id, string version, Information information, DeviceType deviceType, ConnectionType connectionType, bool isConnected, Action<DeviceCommand> sendData)
+            public Device(string id, string version, Information information, DeviceType deviceType, ConnectionType connectionType, bool isConnected, bool isReady, Action<DeviceCommand> sendData)
             {
                 Id = id;
                 Version = version;
@@ -70,6 +77,7 @@ namespace Connector
                 DeviceType = deviceType;
                 ConnectionType = connectionType;
                 IsConnected = isConnected;
+                IsReady = isReady;
                 this.sendData = sendData;
             }
         }
@@ -159,6 +167,7 @@ namespace Connector
                                 deviceType: deviceType,
                                 connectionType: connectionType,
                                 isConnected: true,
+                                isReady: false,
                                 sendData: data =>
                                 {
                                     Message message = new Message.Data()
@@ -182,6 +191,7 @@ namespace Connector
                             throw new Exception("Received disconnect for an unknown device: " + disconnectMessage.deviceId);
                         device = (Device)devices[disconnectMessage.deviceId];
                         device.IsConnected = false;
+                        device.IsReady = false;
                         device.RaiseDisconnected();
                         break;
 
@@ -189,6 +199,11 @@ namespace Connector
                         if (!devices.ContainsKey(dataMessage.deviceId))
                             throw new Exception("Received data for an unknown device: " + dataMessage.deviceId);
                         device = (Device)devices[dataMessage.deviceId];
+                        if (!device.IsReady)
+                        {
+                            device.IsReady = true;
+                            device.RaiseReady();
+                        }
                         device.RaiseData(dataMessage.data);
                         device.LastData = dataMessage.data;
                         break;
