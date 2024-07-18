@@ -2,6 +2,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 
 namespace Connector
@@ -21,10 +23,10 @@ namespace Connector
             public required string deviceId;
             public required string connectionType;
             public required bool isConnected;
-            public string? version;
             public InformationV1Out? information;
         }
         Dictionary<string, Device> devices = new();
+
         class HWInterfaces
         {
             public required HardwareInterface usb;
@@ -36,7 +38,10 @@ namespace Connector
             }
         }
         readonly HWInterfaces hwInterfaces;
-        public DeviceCache(HardwareInterface usb, HardwareInterface bluetooth)
+
+        private readonly string informationJsonPath;
+        private InformationV1Out? standardInformation;
+        public DeviceCache(HardwareInterface usb, HardwareInterface bluetooth, string informationJsonPath)
         {
             hwInterfaces = new HWInterfaces
             {
@@ -52,6 +57,39 @@ namespace Connector
                 hwi.OnDeviceInformation += HWOnDeviceInformation;
                 hwi.OnDeviceData += HWOnDeviceData;
                 hwi.OnDeviceDebug += HWOnDeviceDebug;
+            }
+            this.informationJsonPath = informationJsonPath;
+        }
+        public void LoadInformationJson()
+        {
+            new Message.Debug { message = $"Loading standard information Json at {informationJsonPath}" }.Write(Console.Out);
+            if (!File.Exists(informationJsonPath))
+            {
+                new Message.Debug { message = "No standard information Json found" }.Write(Console.Out);
+                return;
+            }
+            try
+            {
+                string fileText = File.ReadAllText(informationJsonPath);
+                new Message.Debug { message = $"Standard information Json found: {fileText}" }.Write(Console.Out);
+                standardInformation = JsonHelper.FromJson<InformationV1Out>(fileText);
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine($"Exception while reading standard information json {e}");
+            }
+        }
+        public void SaveInformationJson()
+        {
+            new Message.Debug { message = $"Saving standard information Json" }.Write(Console.Out);
+            try
+            {
+                var fileText = JsonHelper.ToJson(standardInformation);
+                File.WriteAllText(path: informationJsonPath, contents: fileText);
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine($"Exception while saving standard information json {e}");
             }
         }
         readonly object messageLock = new();
@@ -76,14 +114,29 @@ namespace Connector
                 // TODO handle change of hardware interface (usb <-> bluetooth)
                 device.isConnected = true;
                 if (device.information == null)
+                {
+
                     sender.RequestInformation(deviceId);
+                    if (standardInformation!=null)
+                    {
+                        OnMessageOut?.Invoke(new Message.Connect()
+                        {
+                            deviceId = deviceId,
+                            connectionType = device.connectionType,
+                            isConnected = device.isConnected,
+                            version = standardInformation.version,
+                            information = standardInformation
+                        });
+                    }
+                }
+
                 else
                     OnMessageOut?.Invoke(new Message.Connect()
                     {
                         deviceId = deviceId,
                         connectionType = device.connectionType,
                         isConnected = device.isConnected,
-                        version = device.version!,
+                        version = device.information!.version,
                         information = device.information!
                     });
             }
@@ -132,24 +185,25 @@ namespace Connector
                 if (device.information == null)
                 {
                     device.information = informationOut;
-                    device.version = informationOut.version;
                     OnMessageOut?.Invoke(new Message.Connect()
                     {
                         deviceId = deviceId,
                         connectionType = device.connectionType,
                         isConnected = device.isConnected,
-                        version = device.version!,
+                        version = device.information.version!,
                         information = device.information!
                     });
                 }
                 else
                     device.information = informationOut;
+                standardInformation = informationOut;
+                SaveInformationJson();
             }
         }
         public void HWOnDeviceData(HardwareInterface sender, string deviceId, DataReceive data)
         {
-            // only propagate data after receiving information
-            if (devices[deviceId].version != null)
+            // only propagate data after receiving information, or if there is standard information
+            if (devices[deviceId].information != null || standardInformation != null)
                 OnMessageOut?.Invoke(new Message.Data()
                 {
                     deviceId = deviceId,
