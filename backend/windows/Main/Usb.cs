@@ -212,13 +212,13 @@ namespace Connector
 
         public void SendData(string id, DataSend data)
         {
-            // UsbDevice device = devices[id];
-            // lock (device.writeLock)
-            // {
-            //     Protocol.SerializeData<DataSend>(data, device.packageSendBuffer);
-            //     device.serial.Write(device.packageSendBuffer, 0, device.packageSendBuffer.Length);
-            //     device.serial.Write(Protocol.PACKAGE_DELIM, 0, Protocol.PACKAGE_DELIM.Length);
-            // }
+            UsbDevice device = devices[id];
+            lock (device.writeLock)
+            {
+                Protocol.SerializeData<DataSend>(data, device.packageSendBuffer);
+                device.serial.Write(device.packageSendBuffer, 0, device.packageSendBuffer.Length);
+                device.serial.Write(Protocol.PACKAGE_DELIM, 0, Protocol.PACKAGE_DELIM.Length);
+            }
         }
 
         void ReadPackage(string id, SerialPort serial, PackageReadBuffer buffer)
