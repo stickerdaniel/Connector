@@ -193,7 +193,7 @@ namespace Connector
             {
                 case Message.Scan scanMessage:
                     if (scanMessage.connectionType == ConnectionType.Usb)
-                        hwInterfaces.usb.StartScan();
+                        hwInterfaces.usb.ScanForDevices();
                     // TODO bluetooth
                     // hwInterfaces.bluetooth.StartScan();
                     break;

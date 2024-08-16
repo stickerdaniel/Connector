@@ -1,36 +1,17 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Text;
-using System.Threading;
-using System.IO.Ports;
 using System.IO;
 using System.Linq;
 using System.Management;
-using System.Text.RegularExpressions;
-using System.Collections.Concurrent;
+using System.Threading;
+using Windows.Networking;
 
 namespace Connector
 {
 
     public class Usb : HardwareInterface
     {
-        class PackageReadBuffer
-        {
-            public long transmissionStartTime = 0;
-            public byte[] data = new byte[1024];
-            public int offset = 0;
-        }
-        class UsbDevice
-        {
-
-            public SerialPort serial;
-            // thread for reading the serial stream
-            public Thread readThread, writeThread;
-            public readonly PackageReadBuffer packageReadBuffer = new();
-            public readonly byte[] packageSendBuffer = new byte[Protocol.DATA_SEND_SIZE];
-            public readonly object writeLock = new();
-            public ConcurrentQueue<DataSend> dataSendQueue = new();
-        }
 
         // identify by portName for now
         Dictionary<string, UsbDevice> devices = new();
@@ -44,6 +25,8 @@ namespace Connector
         public event Action<HardwareInterface, string, DataReceive> OnDeviceData;
         public event Action<HardwareInterface, string, string> OnDeviceDebug;
 
+        Thread serviceThread; 
+        ConcurrentQueue<Action> serviceQueue = new();
         public void Init()
         {
 
@@ -57,15 +40,47 @@ namespace Connector
             watcher.EventArrived += UsbDevicePlugged;
             watcher.Query = query;
             watcher.Start();
+
+            serviceThread = new Thread(ServiceRoutine);
+            serviceThread.Start();
             // trigger initial scan
-            StartScan();
+            EnqueueScan();
         }
         private void UsbDevicePlugged(object sender, EventArrivedEventArgs args)
         {
             // rescan usb devices
-            StartScan();
+            EnqueueScan();
         }
-        public void StartScan()
+        /// <summary>
+        /// Enqueues a ScanForDevices in the ServiceRoutine
+        /// When a Device has an error disconnected it requests a new Scan. But this scan has the potential to close the device and thereby the thread that this method is called from. To avoid looping dependencies, an action queue was added.
+        /// </summary>
+        private void EnqueueScan()
+        {
+            serviceQueue.Enqueue(ScanForDevices);
+        }
+        private void ServiceRoutine()
+        {
+            while (true)
+            {
+                try
+                {
+                    while (!serviceQueue.IsEmpty)
+                    {
+                        if (serviceQueue.TryDequeue(out Action serviceAction))
+                        {
+                            serviceAction?.Invoke();
+                        }
+                    }
+                }
+                catch (Exception ex) {
+
+                    OnDeviceError?.Invoke(this, "", ex.Message);
+                
+                }
+            }
+        }
+        public void ScanForDevices()
         {
             HashSet<string> ports = new();
             // Use WMI to get the PNPDeviceID of each COM port
@@ -89,201 +104,80 @@ namespace Connector
             }
             foreach (var portName in ports.Except(devices.Keys))
             {
-                StartDevice(portName);
-                // OnDeviceConnected event is fired after the port is opened
+                AddDevice(portName);
             }
 
             foreach (var portName in devices.Keys.Except(ports))
             {
-                try
-                {
-
-                    devices[portName].serial.Close();
-                }
-                catch (Exception e)
-                {
-
-                    OnDeviceError?.Invoke(this, portName, e.Message);
-                }
-                OnDeviceDisconnected?.Invoke(this, portName);
-                devices.Remove(portName);
+                RemoveDevice(portName);
             }
         }
-        void StartDevice(string portName)
+
+        private void AddDevice(string portName)
         {
-            UsbDevice device = new UsbDevice();
+            UsbDevice device = new UsbDevice(portName);
+
+            device.OnDeviceData += DeviceOnDeviceData;
+            device.OnDeviceError += DeviceOnDeviceError;
+            device.OnDeviceInformation += DeviceOnDeviceInformation;
+            device.OnDeviceDebug += DeviceOnDeviceDebug;
+            device.OnRequestConnectionCheck += RecheckConnection;
+
+
             devices.Add(portName, device);
-            device.serial = new SerialPort(portName, 230400)
-            {
-                ReadTimeout = 1000,
-                WriteTimeout = 1000
-            };
-            device.serial.Open();
-            device.serial.DiscardOutBuffer();
-            device.serial.DiscardInBuffer();
+            device.Start();
             OnDeviceConnected?.Invoke(this, portName);
-
-            device.readThread = new Thread(() => ReadRoutine(portName));
-            device.readThread.Start();
-            device.writeThread = new Thread(() => WriteRoutine(portName));
-            device.writeThread.Start();
         }
-        void WriteRoutine(string portName)
+
+        private void RecheckConnection(string portName)
+        {
+            EnqueueScan();
+        }
+
+        private void RemoveDevice(string portName)
         {
             UsbDevice device = devices[portName];
-            while (true)
-            {
-                try
-                {
-                    while (!device.dataSendQueue.IsEmpty)
-                    {
-                        if (device.dataSendQueue.TryDequeue(out DataSend dataSend))
-                        {
-                            Console.WriteLine("Sending data");
-                            SendData(portName, dataSend);
-                        }
-                    }
-                }
 
-                catch (Exception e) when (e is ThreadInterruptedException)
-                {
-                    // Thread.Interrupt was called, just quit
-                    break;
-                }
-                catch (Exception e)
-                {
-                    OnDeviceError?.Invoke(this, portName, e.ToString());
-                    Thread.Sleep(50);
-                    // check if device is still connected as com device
-                    StartScan();
-                    // device is not connected anymore, quit
-                    if (!devices.ContainsKey(portName))
-                        break;
+            device.OnDeviceData -= DeviceOnDeviceData;
+            device.OnDeviceError -= DeviceOnDeviceError;
+            device.OnDeviceInformation -= DeviceOnDeviceInformation;
+            device.OnDeviceDebug -= DeviceOnDeviceDebug;
+            device.OnRequestConnectionCheck -= RecheckConnection;
 
-                    // stream was closed or has problems, wait for reconnection/resolution
-                    if (e is not TimeoutException)
-                        Thread.Sleep(500);
-                }
-            }
+            device.Close();
+
+            OnDeviceDisconnected?.Invoke(this, portName);
+            devices.Remove(portName);
         }
-        void ReadRoutine(string portName)
+
+        private void DeviceOnDeviceDebug(string portName, string message)
         {
-            UsbDevice device = devices[portName];
-            // (re-)open serial port on first connect and on reconnects(?)
-            bool quit = false;
-            while (!quit)
-            {
-                try
-                {
-                    ReadPackage(portName, device.serial, device.packageReadBuffer);
-                }
-                catch (Exception e) when (e is ThreadInterruptedException)
-                {
-                    // Thread.Interrupt was called, just quit
-                    break;
-                }
-                catch (Exception e)
-                {
-                    OnDeviceError?.Invoke(this, portName, e.ToString());
-                    Thread.Sleep(50);
-                    // check if device is still connected as com device
-                    StartScan();
-                    // device is not connected anymore, quit
-                    if (!devices.ContainsKey(portName))
-                        break;
+            OnDeviceDebug?.Invoke(this, portName, message);
+        }
 
-                    // stream was closed or has problems, wait for reconnection/resolution
-                    if (e is not TimeoutException)
-                        Thread.Sleep(500);
-                }
+        private void DeviceOnDeviceInformation(string portName, InformationV1In information)
+        {
+            OnDeviceInformation?.Invoke(this, portName, information);
+        }
 
-            }
+        private void DeviceOnDeviceError(string portName, string errorMessage)
+        {
+            OnDeviceError?.Invoke(this, portName, errorMessage);
+        }
+
+        private void DeviceOnDeviceData(string portName, DataReceive data)
+        {
+            OnDeviceData?.Invoke(this, portName, data);
         }
 
         public void RequestInformation(string id)
         {
-            DataSend data = new()
-            {
-                requestInformation = true
-            };
-            UsbDevice device = devices[id];
-            device.dataSendQueue.Enqueue(data);
+            devices[id].RequestInformation();
         }
 
         public void SendData(string id, DataSend data)
         {
-            UsbDevice device = devices[id];
-            lock (device.writeLock)
-            {
-                Protocol.SerializeData<DataSend>(data, device.packageSendBuffer);
-                device.serial.Write(device.packageSendBuffer, 0, device.packageSendBuffer.Length);
-                device.serial.Write(Protocol.PACKAGE_DELIM, 0, Protocol.PACKAGE_DELIM.Length);
-            }
-        }
-
-        void ReadPackage(string id, SerialPort serial, PackageReadBuffer buffer)
-        {
-            int x;
-            while ((x = serial.ReadByte()) != -1)
-            {
-                // case 1: last package timed out
-                if (buffer.transmissionStartTime > 0 && DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond > buffer.transmissionStartTime + 2000)
-                {
-                    Console.Error.WriteLine("package timed out");
-                    // assume the start of a new package
-                    buffer.transmissionStartTime = 0;
-                }
-                // case 2: transmission of new package
-                if (buffer.transmissionStartTime == 0)
-                {
-                    buffer.offset = 0;
-                    buffer.transmissionStartTime = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
-                }
-                // case 3: buffer overflow, this package will be corrupted
-                if (buffer.offset == buffer.data.Length)
-                {
-                    Console.Error.WriteLine("buffer overflow");
-                    // continue reading the package until the end, event if it is corrupted
-                    buffer.offset = 0;
-                }
-                // case 4: continuation of already started package
-                buffer.data[buffer.offset++] = (byte)x;
-                // case 5: end of package reached
-                if (buffer.offset >= Protocol.PACKAGE_DELIM.Length &&
-                     Protocol.MemoryCompare(Protocol.PACKAGE_DELIM, buffer.data, buffer.offset - Protocol.PACKAGE_DELIM.Length))
-                {
-                    //Console.Error.WriteLine(b.offset);
-                    buffer.transmissionStartTime = 0;
-                    if (Protocol.MemoryCompare(Encoding.ASCII.GetBytes("DATA"), buffer.data))
-                    {
-                        if (buffer.offset - Protocol.PACKAGE_DELIM.Length != Protocol.DATA_RECEIVE_SIZE)
-                        {
-                            Console.Error.WriteLine("data packet has wrong size");
-                        }
-                        else
-                        {
-                            DataReceive dataReceive = Protocol.DeserializeData<DataReceive>(buffer.data);
-                            OnDeviceData?.Invoke(this, id, dataReceive);
-                        }
-                    }
-                    else if (Protocol.MemoryCompare(Encoding.ASCII.GetBytes("DEBUG"), buffer.data))
-                    {
-                        string debugReceive = Encoding.ASCII.GetString(buffer.data, 5, buffer.offset - 5 - Protocol.PACKAGE_DELIM.Length);
-                        OnDeviceDebug?.Invoke(this, id, debugReceive);
-                    }
-                    else if (buffer.data[0] == '{')
-                    {
-                        // glove information sent as modified json without quotes
-                        string information = Encoding.ASCII.GetString(buffer.data, 0, buffer.offset - Protocol.PACKAGE_DELIM.Length);
-                        // unstrip double quotes to create valid json again
-                        string json = Regex.Replace(information, @"[\w]+", (m) => '"' + m.ToString() + '"');
-                        InformationV1In deserialized = JsonHelper.FromJson<InformationV1In>(json);
-                        OnDeviceInformation?.Invoke(this, id, deserialized);
-                    }
-
-                }
-            }
-
+            devices[id].SendData(data);
         }
     }
 }
