@@ -93,6 +93,16 @@ namespace Connector
 
             foreach (var portName in devices.Keys.Except(ports))
             {
+                try
+                {
+
+                    devices[portName].serial.Close();
+                }
+                catch (Exception e)
+                {
+
+                    OnDeviceError?.Invoke(this, portName, e.Message);
+                }
                 OnDeviceDisconnected?.Invoke(this, portName);
                 devices.Remove(portName);
             }
