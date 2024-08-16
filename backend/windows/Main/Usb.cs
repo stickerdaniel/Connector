@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Management;
 using System.Text.RegularExpressions;
+using System.Collections.Concurrent;
 
 namespace Connector
 {
@@ -24,11 +25,11 @@ namespace Connector
 
             public SerialPort serial;
             // thread for reading the serial stream
-            public Thread readThread;
+            public Thread readThread, writeThread;
             public readonly PackageReadBuffer packageReadBuffer = new();
             public readonly byte[] packageSendBuffer = new byte[Protocol.DATA_SEND_SIZE];
             public readonly object writeLock = new();
-
+            public ConcurrentQueue<DataSend> dataSendQueue = new();
         }
 
         // identify by portName for now
@@ -45,6 +46,7 @@ namespace Connector
 
         public void Init()
         {
+
             // 2: device connected
             // 3: device disconnected
             var query = new WqlEventQuery("SELECT * FROM Win32_DeviceChangeEvent WHERE EventType = 2 OR EventType = 3")
@@ -116,28 +118,63 @@ namespace Connector
                 ReadTimeout = 1000,
                 WriteTimeout = 1000
             };
+            device.serial.Open();
+            device.serial.DiscardOutBuffer();
+            device.serial.DiscardInBuffer();
+            OnDeviceConnected?.Invoke(this, portName);
+
             device.readThread = new Thread(() => ReadRoutine(portName));
             device.readThread.Start();
+            device.writeThread = new Thread(() => WriteRoutine(portName));
+            device.writeThread.Start();
         }
+        void WriteRoutine(string portName)
+        {
+            UsbDevice device = devices[portName];
+            while (true)
+            {
+                try
+                {
+                    while (!device.dataSendQueue.IsEmpty)
+                    {
+                        if (device.dataSendQueue.TryDequeue(out DataSend dataSend))
+                        {
+                            Console.WriteLine("Sending data");
+                            SendData(portName, dataSend);
+                        }
+                    }
+                }
 
+                catch (Exception e) when (e is ThreadInterruptedException)
+                {
+                    // Thread.Interrupt was called, just quit
+                    break;
+                }
+                catch (Exception e)
+                {
+                    OnDeviceError?.Invoke(this, portName, e.ToString());
+                    Thread.Sleep(50);
+                    // check if device is still connected as com device
+                    StartScan();
+                    // device is not connected anymore, quit
+                    if (!devices.ContainsKey(portName))
+                        break;
+
+                    // stream was closed or has problems, wait for reconnection/resolution
+                    if (e is not TimeoutException)
+                        Thread.Sleep(500);
+                }
+            }
+        }
         void ReadRoutine(string portName)
         {
             UsbDevice device = devices[portName];
             // (re-)open serial port on first connect and on reconnects(?)
-            bool doOpen = true;
             bool quit = false;
             while (!quit)
             {
                 try
                 {
-                    if (doOpen)
-                    {
-                        device.serial.Open();
-                        device.serial.DiscardOutBuffer();
-                        device.serial.DiscardInBuffer();
-                        doOpen = false;
-                        OnDeviceConnected?.Invoke(this, portName);
-                    }
                     ReadPackage(portName, device.serial, device.packageReadBuffer);
                 }
                 catch (Exception e) when (e is ThreadInterruptedException)
@@ -169,7 +206,8 @@ namespace Connector
             {
                 requestInformation = true
             };
-            SendData(id, data);
+            UsbDevice device = devices[id];
+            device.dataSendQueue.Enqueue(data);
         }
 
         public void SendData(string id, DataSend data)
