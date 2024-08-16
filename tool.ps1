@@ -26,7 +26,7 @@ function build_android {
 function build_windows {
     Write-Output "Building Windows connector..."
     Push-Location .\backend\windows
-    dotnet publish -c Release -r win10-x64 --no-self-contained -o ../../frontend/Unity/Assets/StreamingAssets Connector.csproj
+    dotnet publish -c Release -r win10-x64 --self-contained -o ../../frontend/Unity/Assets/StreamingAssets Connector.csproj
     Pop-Location
 }
 
