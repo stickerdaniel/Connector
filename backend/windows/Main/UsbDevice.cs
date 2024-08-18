@@ -55,11 +55,11 @@ namespace Connector
             try
             {
 
-                serial.Close();
                 readThreadCancellationTokenSource.Cancel();
-                readThread.Join();
                 writeThreadCancellationTokenSource.Cancel();
+                readThread.Join();
                 writeThread.Join();
+                serial.Close();
             }
             catch (Exception e)
             {
