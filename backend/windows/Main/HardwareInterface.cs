@@ -21,7 +21,7 @@ namespace Connector
         event Action<HardwareInterface, string, string> OnDeviceDebug;
         void RequestInformation(string id);
         void SendData(string id, DataSend data);
-        void StartScan();
+        void ScanForDevices();
         string ConnectionType { get; }
 
     }

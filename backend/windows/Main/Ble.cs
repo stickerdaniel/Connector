@@ -111,7 +111,7 @@ namespace Connector
         {
         }
 
-        public void StartScan()
+        public void ScanForDevices()
         {
             scanIds.Clear();
 
