@@ -19,6 +19,7 @@ namespace Connector
         {
             process = new Process();
             process.StartInfo.FileName = System.IO.Path.Combine(Application.streamingAssetsPath, "Connector.exe");
+            process.StartInfo.Arguments = @$"jsonPath {Path.Combine(Application.persistentDataPath, "StandardDeviceInformation.json")}";
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.RedirectStandardOutput = true;
             process.StartInfo.RedirectStandardError = true;
