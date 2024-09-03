@@ -5,14 +5,11 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.hardware.usb.UsbDeviceConnection
 import android.hardware.usb.UsbManager
-import android.util.Log
 import androidx.core.content.ContextCompat
 import com.hoho.android.usbserial.driver.UsbSerialDriver
-import com.hoho.android.usbserial.driver.UsbSerialPort
 import com.hoho.android.usbserial.driver.UsbSerialProber
-import java.io.IOException
+import java.util.concurrent.ConcurrentLinkedQueue
 
 // ...
 
@@ -20,17 +17,6 @@ class Usb : BroadcastReceiver(), HardwareInterface {
 
     private lateinit var usbManager: UsbManager
 
-    class SerialDevice {
-        lateinit var driver: UsbSerialDriver
-        lateinit var serial: UsbSerialPort
-        lateinit var readThread: Thread
-        val packageReadBuffer = PackageReadBuffer()
-        val packageSendBuffer = ByteArray(Protocol.DATA_SEND_SIZE)
-        val writeLock = Any()
-
-        // throttle sending data
-        var writeTimestamp = 0L
-    }
 
     class PackageReadBuffer {
         var transmissionStartTime: Long = 0
@@ -38,7 +24,7 @@ class Usb : BroadcastReceiver(), HardwareInterface {
         var offset = 0
     }
 
-    var device: SerialDevice? = null
+    private var device: SerialDevice? = null
 
     private val scanLock=Any()
 
@@ -48,6 +34,17 @@ class Usb : BroadcastReceiver(), HardwareInterface {
     override var onDeviceInformation: ((HardwareInterface, String, InformationV1In) -> Unit)? = null
     override var onDeviceData: ((HardwareInterface, String, DataReceive) -> Unit)? = null
     override var onDeviceDebug: ((HardwareInterface, String, String) -> Unit)? = null
+
+    private val serviceThread: Thread= Thread { serviceRoutine() }
+    private val serviceQueue: ConcurrentLinkedQueue<(()->Unit)> = ConcurrentLinkedQueue()
+
+    override fun requestInformation(id: String) {
+        device?.requestInformation()
+    }
+
+    override fun sendData(id: String, data: DataSend) {
+        device?.sendData(data)
+    }
 
 
     override val connectionType: String = ConnectionType.Usb
@@ -66,8 +63,8 @@ class Usb : BroadcastReceiver(), HardwareInterface {
         )
 
         usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
-
-        startScan(context)
+        serviceThread.start()
+        serviceQueue.add { startScan(context) }
     }
 
 
@@ -76,7 +73,7 @@ class Usb : BroadcastReceiver(), HardwareInterface {
         val availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(usbManager)
         var driver: UsbSerialDriver? = null
         // request permission for usb device
-        if (!availableDrivers.isEmpty()) {
+        if (availableDrivers.isNotEmpty()) {
             driver = availableDrivers[0]
             val permissionIntent = PendingIntent.getBroadcast(
                 context,
@@ -90,10 +87,17 @@ class Usb : BroadcastReceiver(), HardwareInterface {
         // new device found
         if (device == null && driver != null) {
             //initialize device
-            val device = SerialDevice()
-            device.driver = driver
-            device.serial = driver.ports[0]
-            device.readThread = Thread { readRoutine() }
+            val device = SerialDevice(
+                driver=driver,
+                serial = driver.ports[0],
+                usbManager=usbManager
+            )
+            device.onDeviceData=::deviceOnDeviceData
+            device.onDeviceConnected=::deviceOnDeviceConnected
+            device.onDeviceError=::deviceOnDeviceError
+            device.onDeviceInformation=::deviceOnDeviceInformation
+            device.onDeviceDebug=::deviceOnDeviceDebug
+            device.onRequestConnectionCheck=::deviceOnDeviceRequestConnectionCheck
             this.device = device
         }
 
@@ -104,159 +108,65 @@ class Usb : BroadcastReceiver(), HardwareInterface {
         }
     }
 
+    private fun  recheckConnection(){
+        val availableDrivers =
+            UsbSerialProber.getDefaultProber().findAllDrivers(usbManager)
+        if (availableDrivers.isEmpty()) {
+            stopDevice()
+        }
+    }
+
+
+
+
+
+    private fun serviceRoutine(){
+        while (true){
+            while (serviceQueue.isNotEmpty()){
+                serviceQueue.remove().invoke()
+            }
+            Thread.sleep(50)
+        }
+    }
 
     private fun startDevice(device: SerialDevice) {
-        Log.d("USB", "Starting device")
-        try {
-            //if (!device.serial.isOpen) {
-            val connection: UsbDeviceConnection = usbManager.openDevice(device.driver.device)
-                ?: throw IOException("Cannot open device")
-            device.serial.open(connection)
-            device.serial.setParameters(
-                230400,
-                8,
-                UsbSerialPort.STOPBITS_1,
-                UsbSerialPort.PARITY_NONE
-            )
-            //}
-            onDeviceConnected?.invoke(this, "USB")
-            device.readThread.start()
-
-        } catch (e: IOException) {
-            onDeviceError?.invoke(this, "USB", "Error opening device: ${e.message}")
-        }
-
+        device.start()
     }
 
     // safely disconnect device
     private fun stopDevice() {
-        val device: SerialDevice = device ?: return
         onDeviceDisconnected?.invoke(this, "USB")
-        try {
-            device.serial.close()
-        } catch (e: IOException) {
-        }
-        device.readThread.interrupt()
+        device?.close()
         this.device = null
     }
 
-    private fun readRoutine() {
-        val device = this.device!!
-        val buffer = ByteArray(512)
-        var numBytesRead: Int
-        while (!Thread.currentThread().isInterrupted) {
-            try {
-                synchronized(device.writeLock) {
-                    try {
-                        numBytesRead = device.serial.read(buffer, 1000)
-                        for (i in 0 until numBytesRead) {
-                            readPackage("USB", buffer[i], device.packageReadBuffer)
-                        }
-                    } catch (e: IOException) {
-                        onDeviceError?.invoke(this, "USB", "Error reading device: ${e.message}")
-                        // check if the device is still connected
-                        val availableDrivers =
-                            UsbSerialProber.getDefaultProber().findAllDrivers(usbManager)
-                        if (availableDrivers.isEmpty()) {
-                            stopDevice()
-                            // exit read thread
-                            return
-                        } else {
-                            // wait longer, probably the disconnect event will kick in
-                            Thread.sleep(1000)
-                        }
-                    }
-                }
-                Thread.sleep(5)
-            } catch (e: InterruptedException) {
-            }
-        }
+
+
+
+
+    companion object {
+        const val ACTION_USB_PERMISSION = "com.cynteract.connector.USB_PERMISSION"
     }
 
-    fun readPackage(id: String, x: Byte, buffer: PackageReadBuffer) {
-
-        // case 1: last package timed out
-        if (buffer.transmissionStartTime > 0 && System.currentTimeMillis() > buffer.transmissionStartTime + 2000) {
-            System.err.println("package timed out")
-            // assume the start of a new package
-            buffer.transmissionStartTime = 0
-        }
-        // case 2: transmission of new package
-        if (buffer.transmissionStartTime == 0L) {
-            buffer.offset = 0
-            buffer.transmissionStartTime = System.currentTimeMillis()
-        }
-        // case 3: buffer overflow, this package will be corrupted
-        if (buffer.offset == buffer.data.size) {
-            System.err.println("buffer overflow")
-            // continue reading the package until the end, even if it is corrupted
-            buffer.offset = 0
-        }
-        // case 4: continuation of already started package
-        buffer.data[buffer.offset++] = x
-        // case 5: end of package reached
-        if (buffer.offset >= Protocol.PACKAGE_DELIM.size &&
-            Protocol.memoryCompare(
-                Protocol.PACKAGE_DELIM,
-                buffer.data,
-                buffer.offset - Protocol.PACKAGE_DELIM.size
-            )
-        ) {
-            //Console.Error.WriteLine(b.offset);
-            buffer.transmissionStartTime = 0
-            if (Protocol.memoryCompare("DATA".toByteArray(), buffer.data)) {
-                if (buffer.offset - Protocol.PACKAGE_DELIM.size != Protocol.DATA_RECEIVE_SIZE) {
-                    System.err.println("data packet has wrong size")
-                } else {
-                    val dataReceive = Protocol.deserializeData(buffer.data)
-                    onDeviceData?.invoke(this, id, dataReceive)
-                }
-            } else if (Protocol.memoryCompare("DEBUG".toByteArray(), buffer.data)) {
-                val debugReceive =
-                    String(buffer.data, 5, buffer.offset - 5 - Protocol.PACKAGE_DELIM.size)
-                onDeviceDebug?.invoke(this, id, debugReceive)
-            } else if (buffer.data[0] == '{'.code.toByte()) {
-                // glove information sent as modified json without quotes
-                val information =
-                    String(buffer.data, 0, buffer.offset - Protocol.PACKAGE_DELIM.size)
-                // unstrip double quotes to create valid json again
-                val json = information.replace(Regex("[\\w]+")) {
-                    "\"${it.value}\""
-                }
-
-                val deserialized = JsonHelper.fromJson<InformationV1In>(json)
-                onDeviceInformation?.invoke(this, id, deserialized)
-            }
-
-        }
+    private fun  deviceOnDeviceData (id:String,dataReceive: DataReceive){
+        onDeviceData?.invoke(this,id,dataReceive)
     }
-
-    override fun requestInformation(id: String) {
-        val data = DataSend(requestInformation = true)
-        sendData(id, data)
+    private fun deviceOnDeviceConnected(id: String) {
+        onDeviceConnected?.invoke(this,id)
     }
-
-    override fun sendData(id: String, data: DataSend) {
-        val device: SerialDevice = device ?: return
-        // throttle data sending
-        val now = System.currentTimeMillis()
-        if (now - device.writeTimestamp < 10) {
-            onDeviceError?.invoke(this, "USB", "Dropped command due to throttling")
-            return
-        }
-        device.writeTimestamp = now
-        data.serialize(device.packageSendBuffer)
-        try {
-            synchronized(device.writeLock) {
-                device.serial.write(device.packageSendBuffer, 500)
-                device.serial.write(Protocol.PACKAGE_DELIM, 500)
-
-            }
-        } catch (e: IOException) {
-            onDeviceError?.invoke(this, "USB", "Error writing data: ${e.message}")
-        }
+    private fun deviceOnDeviceError(id: String, error: String) {
+        onDeviceError?.invoke(this,id,error)
     }
-
+    private fun deviceOnDeviceInformation(id: String, information: InformationV1In) {
+        onDeviceInformation?.invoke(this,id,information)
+    }
+    private fun deviceOnDeviceDebug(id: String, message: String) {
+        onDeviceDebug?.invoke(this,id,message)
+    }
+    private fun deviceOnDeviceRequestConnectionCheck(id: String) {
+        onDeviceDebug?.invoke(this,id,"Requesting connection check")
+        serviceQueue.add { recheckConnection() }
+    }
     override fun onReceive(context: Context?, intent: Intent?) {
         val action = intent?.action
         if(!this::usbManager.isInitialized){
@@ -265,10 +175,11 @@ class Usb : BroadcastReceiver(), HardwareInterface {
         if ("android.hardware.usb.action.USB_STATE" == action) {
             if (intent.extras?.getBoolean("connected", false) == true) {
                 // connected
-                startScan(context!!)
+                serviceQueue.add { startScan(context!!) }
+
             } else {
                 // disconnected
-                startScan(context!!)
+                serviceQueue.add { startScan(context!!) }
             }
         } else if (ACTION_USB_PERMISSION == action) {
             val granted =
@@ -278,10 +189,6 @@ class Usb : BroadcastReceiver(), HardwareInterface {
                 device?.let { startDevice(it) }
             }
         }
-    }
-
-    companion object {
-        const val ACTION_USB_PERMISSION = "com.cynteract.connector.USB_PERMISSION"
     }
 }
 
