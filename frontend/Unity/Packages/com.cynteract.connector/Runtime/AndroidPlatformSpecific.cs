@@ -1,10 +1,6 @@
-
-#if UNITY_ANDROID && !UNITY_EDITOR
-
 using UnityEngine;
-
 namespace Connector {
-    class PlatformSpecific
+    class AndroidPlatformSpecific:IPlatformSpecific
     {
 
         AndroidJavaObject main;
@@ -43,4 +39,3 @@ namespace Connector {
         }
     }
 }
-#endif

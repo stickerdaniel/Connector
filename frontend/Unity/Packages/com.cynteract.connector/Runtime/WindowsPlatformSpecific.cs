@@ -2,7 +2,6 @@
 // System.Diagnostic does not work in Windows export, only in editor
 // TODO: implement il2cpp compatible version of Process
 
-#if UNITY_EDITOR || UNITY_STANDALONE_WIN
 
 using System;
 using System.Diagnostics;
@@ -11,7 +10,7 @@ using UnityEngine;
 
 namespace Connector
 {
-    class PlatformSpecific
+    class WindowsPlatformSpecific:IPlatformSpecific
     {
         Process? process;
 
@@ -70,4 +69,3 @@ namespace Connector
         }
     }
 }
-#endif

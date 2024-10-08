@@ -15,7 +15,7 @@ namespace Connector
         }
     }
 
-    class DeviceManager : IDeviceManager
+    public class DeviceManager : IDeviceManager
     {
         private Dictionary<string, (DateTime lastLoggedTime, int count)> messageLog = new Dictionary<string, (DateTime, int)>();
         class Device : IDevice
@@ -82,7 +82,7 @@ namespace Connector
             }
         }
 
-        PlatformSpecific platformSpecific = new PlatformSpecific();
+        IPlatformSpecific platformSpecific = PlatformSelection.GetPlatformSpecific();
 
         readonly Dictionary<string, IDevice> devices = new Dictionary<string, IDevice>();
 
