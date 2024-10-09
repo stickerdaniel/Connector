@@ -36,24 +36,6 @@ public class StressTest : MonoBehaviour
             StopAllCoroutines();
             StartCoroutine(RestartDeviceManagerCoroutine());
         });
-    }
-
-    IEnumerator RestartDeviceManagerCoroutine()
-    {
-        while (true)
-        {
-
-            Debug.Log("Stopping");
-            deviceManager.Stop();
-            yield return new WaitForSeconds(float.Parse( delayInputField.text));
-            Debug.Log("Starting");
-            deviceManager.Start();
-            yield return new WaitForSeconds(float.Parse(delayInputField.text));
-        }
-    }
-    void OnEnable()
-    {
-        SetColor(gloveNotConnectedColor);
         deviceManager.OnNewDevice += device =>
         {
             device.OnConnected += () =>
@@ -76,7 +58,30 @@ public class StressTest : MonoBehaviour
                 UpdateColor();
             };
         };
-        deviceManager.Start();
+    }
+
+    IEnumerator RestartDeviceManagerCoroutine()
+    {
+        while (true)
+        {
+
+            Debug.Log("Stopping");
+            deviceManager.Stop();
+            yield return new WaitForSeconds(float.Parse( delayInputField.text));
+            Debug.Log("Starting");
+            deviceManager.Start();
+            yield return new WaitForSeconds(float.Parse(delayInputField.text));
+        }
+    }
+    void OnEnable()
+    {
+        SetColor(gloveNotConnectedColor);
+
+        //deviceManager.Start();
+    }
+    private void Start()
+    {
+        
     }
     private void OnDisable()
     {
