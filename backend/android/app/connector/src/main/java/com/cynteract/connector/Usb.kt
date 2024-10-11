@@ -26,7 +26,7 @@ class Usb : BroadcastReceiver(), HardwareInterface {
 
     private var device: SerialDevice? = null
 
-    private val scanLock=Any()
+    private val scanLock = Any()
 
     override var onDeviceConnected: ((HardwareInterface, String) -> Unit)? = null
     override var onDeviceDisconnected: ((HardwareInterface, String) -> Unit)? = null
@@ -35,8 +35,8 @@ class Usb : BroadcastReceiver(), HardwareInterface {
     override var onDeviceData: ((HardwareInterface, String, DataReceive) -> Unit)? = null
     override var onDeviceDebug: ((HardwareInterface, String, String) -> Unit)? = null
 
-    private val serviceThread: Thread= Thread { serviceRoutine() }
-    private val serviceQueue: ConcurrentLinkedQueue<(()->Unit)> = ConcurrentLinkedQueue()
+    private val serviceThread: Thread = Thread { serviceRoutine() }
+    private val serviceQueue: ConcurrentLinkedQueue<(() -> Unit)> = ConcurrentLinkedQueue()
 
     override fun requestInformation(id: String) {
         device?.requestInformation()
@@ -69,46 +69,46 @@ class Usb : BroadcastReceiver(), HardwareInterface {
 
 
     override fun startScan(context: Context) {
-        synchronized(scanLock){
-        val availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(usbManager)
-        var driver: UsbSerialDriver? = null
-        // request permission for usb device
-        if (availableDrivers.isNotEmpty()) {
-            driver = availableDrivers[0]
-            val permissionIntent = PendingIntent.getBroadcast(
-                context,
-                0,
-                Intent(ACTION_USB_PERMISSION),
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            )
-            usbManager.requestPermission(driver.device, permissionIntent)
-        }
+        synchronized(scanLock) {
+            val availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(usbManager)
+            var driver: UsbSerialDriver? = null
+            // request permission for usb device
+            if (availableDrivers.isNotEmpty()) {
+                driver = availableDrivers[0]
+                val permissionIntent = PendingIntent.getBroadcast(
+                    context,
+                    0,
+                    Intent(ACTION_USB_PERMISSION),
+                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                )
+                usbManager.requestPermission(driver.device, permissionIntent)
+            }
 
-        // new device found
-        if (device == null && driver != null) {
-            //initialize device
-            val device = SerialDevice(
-                driver=driver,
-                serial = driver.ports[0],
-                usbManager=usbManager
-            )
-            device.onDeviceData=::deviceOnDeviceData
-            device.onDeviceConnected=::deviceOnDeviceConnected
-            device.onDeviceError=::deviceOnDeviceError
-            device.onDeviceInformation=::deviceOnDeviceInformation
-            device.onDeviceDebug=::deviceOnDeviceDebug
-            device.onRequestConnectionCheck=::deviceOnDeviceRequestConnectionCheck
-            this.device = device
-        }
+            // new device found
+            if (device == null && driver != null) {
+                //initialize device
+                val device = SerialDevice(
+                    driver = driver,
+                    serial = driver.ports[0],
+                    usbManager = usbManager
+                )
+                device.onDeviceData = ::deviceOnDeviceData
+                device.onDeviceConnected = ::deviceOnDeviceConnected
+                device.onDeviceError = ::deviceOnDeviceError
+                device.onDeviceInformation = ::deviceOnDeviceInformation
+                device.onDeviceDebug = ::deviceOnDeviceDebug
+                device.onRequestConnectionCheck = ::deviceOnDeviceRequestConnectionCheck
+                this.device = device
+            }
 
-        // device disconnected
-        if (device != null && driver == null) {
-            stopDevice()
+            // device disconnected
+            if (device != null && driver == null) {
+                stopDevice()
             }
         }
     }
 
-    private fun  recheckConnection(){
+    private fun recheckConnection() {
         val availableDrivers =
             UsbSerialProber.getDefaultProber().findAllDrivers(usbManager)
         if (availableDrivers.isEmpty()) {
@@ -117,12 +117,9 @@ class Usb : BroadcastReceiver(), HardwareInterface {
     }
 
 
-
-
-
-    private fun serviceRoutine(){
-        while (true){
-            while (serviceQueue.isNotEmpty()){
+    private fun serviceRoutine() {
+        while (true) {
+            while (serviceQueue.isNotEmpty()) {
                 serviceQueue.remove().invoke()
             }
             Thread.sleep(50)
@@ -141,35 +138,38 @@ class Usb : BroadcastReceiver(), HardwareInterface {
     }
 
 
-
-
-
     companion object {
         const val ACTION_USB_PERMISSION = "com.cynteract.connector.USB_PERMISSION"
     }
 
-    private fun  deviceOnDeviceData (id:String,dataReceive: DataReceive){
-        onDeviceData?.invoke(this,id,dataReceive)
+    private fun deviceOnDeviceData(id: String, dataReceive: DataReceive) {
+        onDeviceData?.invoke(this, id, dataReceive)
     }
+
     private fun deviceOnDeviceConnected(id: String) {
-        onDeviceConnected?.invoke(this,id)
+        onDeviceConnected?.invoke(this, id)
     }
+
     private fun deviceOnDeviceError(id: String, error: String) {
-        onDeviceError?.invoke(this,id,error)
+        onDeviceError?.invoke(this, id, error)
     }
+
     private fun deviceOnDeviceInformation(id: String, information: InformationV1In) {
-        onDeviceInformation?.invoke(this,id,information)
+        onDeviceInformation?.invoke(this, id, information)
     }
+
     private fun deviceOnDeviceDebug(id: String, message: String) {
-        onDeviceDebug?.invoke(this,id,message)
+        onDeviceDebug?.invoke(this, id, message)
     }
+
     private fun deviceOnDeviceRequestConnectionCheck(id: String) {
-        onDeviceDebug?.invoke(this,id,"Requesting connection check")
+        onDeviceDebug?.invoke(this, id, "Requesting connection check")
         serviceQueue.add { recheckConnection() }
     }
+
     override fun onReceive(context: Context?, intent: Intent?) {
         val action = intent?.action
-        if(!this::usbManager.isInitialized){
+        if (!this::usbManager.isInitialized) {
             usbManager = context!!.getSystemService(Context.USB_SERVICE) as UsbManager
         }
         if ("android.hardware.usb.action.USB_STATE" == action) {
@@ -181,13 +181,24 @@ class Usb : BroadcastReceiver(), HardwareInterface {
                 // disconnected
                 serviceQueue.add { startScan(context!!) }
             }
-        } else if (ACTION_USB_PERMISSION == action) {
-            val granted =
-                usbManager.hasPermission(device?.driver?.device)//intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)
+        } else if (action == ACTION_USB_PERMISSION) {
 
-            if (granted) {
-                device?.let { startDevice(it) }
-            }
+                if (device == null) {
+                    onDeviceDebug?.invoke(
+                        this,
+                        "USB",
+                        "Device is null cannot check for permissions"
+                    )
+                    return
+                }
+                val granted =
+                    usbManager.hasPermission(device?.driver?.device)
+                //intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)
+
+                if (granted) {
+                    device?.let { startDevice(it) }
+                }
+            
         }
     }
 }
