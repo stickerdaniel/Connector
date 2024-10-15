@@ -9,29 +9,32 @@ import com.hoho.android.usbserial.driver.UsbSerialPort
 import java.io.IOException
 import java.util.concurrent.ConcurrentLinkedQueue
 
-class SerialDevice(val driver: UsbSerialDriver,val serial:UsbSerialPort, val usbManager: UsbManager) {
+class SerialDevice(
+    val driver: UsbSerialDriver,
+    val serial: UsbSerialPort,
+    val usbManager: UsbManager
+) {
 
-    private val readThread: Thread= Thread { readRoutine() }
-    private val writeThread: Thread= Thread { writeRoutine() }
-    private  val packageReadBuffer = PackageReadBuffer()
+    private val readThread: Thread = Thread { readRoutine() }
+    private val writeThread: Thread = Thread { writeRoutine() }
+    private val packageReadBuffer = PackageReadBuffer()
     private val packageSendBuffer = ByteArray(Protocol.DATA_SEND_SIZE)
     private val writeLock = Any()
 
-    private val dataSendQueue:ConcurrentLinkedQueue<DataSend> = ConcurrentLinkedQueue()
+    private val dataSendQueue: ConcurrentLinkedQueue<DataSend> = ConcurrentLinkedQueue()
 
     var onDeviceConnected: ((String) -> Unit)? = null
-    var onDeviceError: (( String, String) -> Unit)? = null
-    var onDeviceInformation: (( String, InformationV1In) -> Unit)? = null
-    var onDeviceData: (( String, DataReceive) -> Unit)? = null
-    var onDeviceDebug: (( String, String) -> Unit)? = null
-    var onRequestConnectionCheck: ((String) -> Unit)?=null;
+    var onDeviceError: ((String, String) -> Unit)? = null
+    var onDeviceInformation: ((String, InformationV1In) -> Unit)? = null
+    var onDeviceData: ((String, DataReceive) -> Unit)? = null
+    var onDeviceDebug: ((String, String) -> Unit)? = null
+    var onRequestConnectionCheck: ((String) -> Unit)? = null;
 
     // throttle sending data
     private var writeTimestamp = 0L
 
 
-
-    public  fun  start(){
+    public fun start() {
         Log.d("USB", "Starting device")
         try {
             //if (!device.serial.isOpen) {
@@ -52,7 +55,8 @@ class SerialDevice(val driver: UsbSerialDriver,val serial:UsbSerialPort, val usb
             onDeviceError?.invoke("USB", "Error opening device: ${e.message}")
         }
     }
-    public  fun  close(){
+
+    public fun close() {
         try {
             serial.close()
         } catch (e: IOException) {
@@ -62,6 +66,7 @@ class SerialDevice(val driver: UsbSerialDriver,val serial:UsbSerialPort, val usb
         writeThread.interrupt()
 
     }
+
     private fun readPackage(x: Byte, buffer: PackageReadBuffer) {
 
         // case 1: last package timed out
@@ -105,16 +110,22 @@ class SerialDevice(val driver: UsbSerialDriver,val serial:UsbSerialPort, val usb
                     String(buffer.data, 5, buffer.offset - 5 - Protocol.PACKAGE_DELIM.size)
                 onDeviceDebug?.invoke("USB", debugReceive)
             } else if (buffer.data[0] == '{'.code.toByte()) {
-                // glove information sent as modified json without quotes
-                val information =
-                    String(buffer.data, 0, buffer.offset - Protocol.PACKAGE_DELIM.size)
-                // unstrip double quotes to create valid json again
-                val json = information.replace(Regex("[\\w]+")) {
-                    "\"${it.value}\""
-                }
+                try{
+                    // glove information sent as modified json without quotes
+                    val information =
+                        String(buffer.data, 0, buffer.offset - Protocol.PACKAGE_DELIM.size)
+                    // unstrip double quotes to create valid json again
+                    val json = information.replace(Regex("[\\w]+")) {
+                        "\"${it.value}\""
+                    }
 
-                val deserialized = JsonHelper.fromJson<InformationV1In>(json)
-                onDeviceInformation?.invoke("USB", deserialized)
+                    val deserialized = JsonHelper.fromJson<InformationV1In>(json)
+                    onDeviceInformation?.invoke("USB", deserialized)
+                }
+                catch (ex:Exception){
+                    onDeviceError?.invoke("USB",ex.toString());
+                    requestInformation()
+                }
             }
 
         }
@@ -124,9 +135,11 @@ class SerialDevice(val driver: UsbSerialDriver,val serial:UsbSerialPort, val usb
         val data = DataSend(requestInformation = true)
         dataSendQueue.add(data)
     }
-    public fun sendData(data: DataSend){
+
+    public fun sendData(data: DataSend) {
         dataSendQueue.add(data)
     }
+
     private fun sendDataImmediately(data: DataSend) {
         // throttle data sending
         val now = System.currentTimeMillis()
@@ -153,18 +166,18 @@ class SerialDevice(val driver: UsbSerialDriver,val serial:UsbSerialPort, val usb
         var numBytesRead: Int
         while (!Thread.currentThread().isInterrupted) {
             try {
-                    try {
-                        numBytesRead = serial.read(buffer, 1000)
-                        for (i in 0 until numBytesRead) {
-                            readPackage(buffer[i], packageReadBuffer)
-                        }
-                    } catch (e: IOException) {
-                        onDeviceError?.invoke("USB", "Error reading device: ${e.message}")
-                        // check if the device is still connected
-                        onRequestConnectionCheck?.invoke("USB")
-                        Thread.sleep(500)
-
+                try {
+                    numBytesRead = serial.read(buffer, 1000)
+                    for (i in 0 until numBytesRead) {
+                        readPackage(buffer[i], packageReadBuffer)
                     }
+                } catch (e: IOException) {
+                    onDeviceError?.invoke("USB", "Error reading device: ${e.message}")
+                    // check if the device is still connected
+                    onRequestConnectionCheck?.invoke("USB")
+                    Thread.sleep(500)
+
+                }
 
                 Thread.sleep(5)
             } catch (e: InterruptedException) {
@@ -173,10 +186,11 @@ class SerialDevice(val driver: UsbSerialDriver,val serial:UsbSerialPort, val usb
             }
         }
     }
-    private fun writeRoutine(){
+
+    private fun writeRoutine() {
         while (!Thread.currentThread().isInterrupted) {
             try {
-                while (!dataSendQueue.isEmpty()){
+                while (!dataSendQueue.isEmpty()) {
                     sendDataImmediately(dataSendQueue.remove())
                 }
                 Thread.sleep(5)
