@@ -1,6 +1,6 @@
 {
     "name": "com.cynteract.connector",
-    "version": "1.0.7",
+    "version": "1.0.8",
     "displayName": "Cynteract Connector",
     "description": "Connecting the hardware devices to the Unity application",
     "unity": "2022.3",
