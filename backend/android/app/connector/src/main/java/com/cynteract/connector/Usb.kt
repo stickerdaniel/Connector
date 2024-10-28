@@ -168,14 +168,23 @@ class Usb : BroadcastReceiver(), HardwareInterface {
     }
 
     override fun onReceive(context: Context?, intent: Intent?) {
+        // sharedPreferences
+        val sharedPreferences = context.getSharedPreferences("permission_prefs", Context.MODE_PRIVATE)
+
         val action = intent?.action
         if (!this::usbManager.isInitialized) {
             usbManager = context!!.getSystemService(Context.USB_SERVICE) as UsbManager
         }
         if ("android.hardware.usb.action.USB_STATE" == action) {
             if (intent.extras?.getBoolean("connected", false) == true) {
-                // connected
-                serviceQueue.add { startScan(context!!) }
+                //sharedPreferences part
+                if (sharedPreferences.getBoolean("permissionGranted", false)) {
+                    // Permission already granted, start the device
+                    device?.let { startDevice(it) }
+                } else {
+                    // Permission not granted, request permission
+                    usbManager.requestPermission(device, PendingIntent.getBroadcast(context, 0, Intent(ACTION_USB_PERMISSION), 0))
+                }
 
             } else {
                 // disconnected
@@ -197,6 +206,9 @@ class Usb : BroadcastReceiver(), HardwareInterface {
 
                 if (granted) {
                     device?.let { startDevice(it) }
+
+                    // Save the permission status
+                    sharedPreferences.edit().putBoolean("permissionGranted", true).apply()
                 }
             
         }
