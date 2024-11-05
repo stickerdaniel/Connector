@@ -3,13 +3,13 @@ package com.cynteract.connector
 import android.hardware.usb.UsbDeviceConnection
 import android.hardware.usb.UsbManager
 import android.util.Log
-import com.cynteract.connector.Usb.PackageReadBuffer
 import com.hoho.android.usbserial.driver.UsbSerialDriver
 import com.hoho.android.usbserial.driver.UsbSerialPort
 import java.io.IOException
 import java.util.concurrent.ConcurrentLinkedQueue
 
 class SerialDevice(
+    val deviceName:String,
     val driver: UsbSerialDriver,
     val serial: UsbSerialPort,
     val usbManager: UsbManager
@@ -33,9 +33,10 @@ class SerialDevice(
     // throttle sending data
     private var writeTimestamp = 0L
 
-
+    public var running=false
     public fun start() {
-        Log.d("USB", "Starting device")
+        Log.d(deviceName, "Starting device")
+        running=true
         try {
             //if (!device.serial.isOpen) {
             val connection: UsbDeviceConnection = usbManager.openDevice(driver.device)
@@ -48,11 +49,11 @@ class SerialDevice(
                 UsbSerialPort.PARITY_NONE
             )
             //}
-            onDeviceConnected?.invoke("USB")
+            onDeviceConnected?.invoke(deviceName)
             readThread.start()
             writeThread.start()
         } catch (e: IOException) {
-            onDeviceError?.invoke("USB", "Error opening device: ${e.message}")
+            onDeviceError?.invoke(deviceName, "Error opening device: ${e.message}")
         }
     }
 
@@ -60,11 +61,12 @@ class SerialDevice(
         try {
             serial.close()
         } catch (e: IOException) {
-            onDeviceError?.invoke("USB", "Error opening device: ${e.message}")
+            onDeviceError?.invoke(deviceName, "Error closing device: ${e.message}")
         }
         readThread.interrupt()
         writeThread.interrupt()
 
+        running=false
     }
 
     private fun readPackage(x: Byte, buffer: PackageReadBuffer) {
@@ -103,12 +105,12 @@ class SerialDevice(
                     System.err.println("data packet has wrong size")
                 } else {
                     val dataReceive = Protocol.deserializeData(buffer.data)
-                    onDeviceData?.invoke("USB", dataReceive)
+                    onDeviceData?.invoke(deviceName, dataReceive)
                 }
             } else if (Protocol.memoryCompare("DEBUG".toByteArray(), buffer.data)) {
                 val debugReceive =
                     String(buffer.data, 5, buffer.offset - 5 - Protocol.PACKAGE_DELIM.size)
-                onDeviceDebug?.invoke("USB", debugReceive)
+                onDeviceDebug?.invoke(deviceName, debugReceive)
             } else if (buffer.data[0] == '{'.code.toByte()) {
                 try{
                     // glove information sent as modified json without quotes
@@ -120,10 +122,10 @@ class SerialDevice(
                     }
 
                     val deserialized = JsonHelper.fromJson<InformationV1In>(json)
-                    onDeviceInformation?.invoke("USB", deserialized)
+                    onDeviceInformation?.invoke(deviceName, deserialized)
                 }
                 catch (ex:Exception){
-                    onDeviceError?.invoke("USB",ex.toString());
+                    onDeviceError?.invoke(deviceName,ex.toString());
                     requestInformation()
                 }
             }
@@ -144,7 +146,7 @@ class SerialDevice(
         // throttle data sending
         val now = System.currentTimeMillis()
         if (now - writeTimestamp < 10) {
-            onDeviceError?.invoke("USB", "Dropped command due to throttling")
+            onDeviceError?.invoke(deviceName, "Dropped command due to throttling")
             return
         }
         writeTimestamp = now
@@ -156,7 +158,7 @@ class SerialDevice(
 
             }
         } catch (e: IOException) {
-            onDeviceError?.invoke("USB", "Error writing data: ${e.message}")
+            onDeviceError?.invoke(deviceName, "Error writing data: ${e.message}")
         }
     }
 
@@ -172,16 +174,16 @@ class SerialDevice(
                         readPackage(buffer[i], packageReadBuffer)
                     }
                 } catch (e: IOException) {
-                    onDeviceError?.invoke("USB", "Error reading device: ${e.message}")
+                    onDeviceError?.invoke(deviceName, "Error reading device: ${e.message}")
                     // check if the device is still connected
-                    onRequestConnectionCheck?.invoke("USB")
+                    onRequestConnectionCheck?.invoke(deviceName)
                     Thread.sleep(500)
 
                 }
 
                 Thread.sleep(5)
             } catch (e: InterruptedException) {
-                onDeviceError?.invoke("USB", "Read routine interrupted: ${e.message}")
+                onDeviceError?.invoke(deviceName, "Read routine interrupted: ${e.message}")
                 return
             }
         }
@@ -195,7 +197,7 @@ class SerialDevice(
                 }
                 Thread.sleep(5)
             } catch (e: InterruptedException) {
-                onDeviceError?.invoke("USB", "Write routine interrupted: ${e.message}")
+                onDeviceError?.invoke(deviceName, "Write routine interrupted: ${e.message}")
                 return
             }
         }

@@ -3,7 +3,7 @@ package com.cynteract.connector
 import android.content.Context
 
 class Main(private val messageCallback: MessageListener) {
-    val usb = Usb()
+    val usb = UsbReceiver()
     val bluetooth: Ble = Ble()
     val deviceCache: DeviceCache =
         DeviceCache(usb, bluetooth)

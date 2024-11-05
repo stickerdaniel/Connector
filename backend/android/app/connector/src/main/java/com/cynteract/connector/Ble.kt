@@ -30,10 +30,6 @@ class Ble : HardwareInterface {
         TODO("Not yet implemented")
     }
 
-    override fun startScan(context: Context) {
-        TODO("Not yet implemented")
-    }
-
     override val connectionType: String
         get() = TODO("Not yet implemented")
 }
