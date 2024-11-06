@@ -21,7 +21,7 @@ class UsbSerialDevice(
 }
 
 class UsbReceiver : BroadcastReceiver(), HardwareInterface {
-    override val connectionType: String="USB"
+    override val connectionType: String="usb"
     private lateinit var manager: UsbManager
     private lateinit var permissionIntent: PendingIntent
 
@@ -90,6 +90,7 @@ class UsbReceiver : BroadcastReceiver(), HardwareInterface {
             if (!devices.keys.contains(device)) {
                 val serialDevice=deviceMap[device]!!.serialDevice
                 serialDevice.close()
+                onDeviceDisconnected?.invoke(this,device)
             }
         }
         //Remove removed devices from the map
