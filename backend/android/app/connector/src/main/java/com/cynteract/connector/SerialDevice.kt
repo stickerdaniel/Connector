@@ -65,6 +65,8 @@ class SerialDevice(
         }
         readThread.interrupt()
         writeThread.interrupt()
+        readThread.join()
+        writeThread.join()
 
         running=false
     }
