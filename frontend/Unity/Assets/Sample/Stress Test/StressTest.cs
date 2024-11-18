@@ -67,6 +67,9 @@ public class StressTest : MonoBehaviour
 
             Debug.Log("Stopping");
             deviceManager.Stop();
+            ready=false;
+            connected = false;
+            UpdateColor();
             yield return new WaitForSeconds(float.Parse( delayInputField.text));
             Debug.Log("Starting");
             deviceManager.Start();
