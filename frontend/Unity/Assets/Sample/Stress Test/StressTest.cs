@@ -23,6 +23,8 @@ public class StressTest : MonoBehaviour
     [SerializeField]
     private InputField delayInputField;
 
+    [SerializeField]
+    private Button requestInformationButton;
 
     ConcurrentQueue<Action> actionQueue = new();
 
@@ -38,6 +40,8 @@ public class StressTest : MonoBehaviour
         });
         deviceManager.OnNewDevice += device =>
         {
+            requestInformationButton.onClick.RemoveAllListeners();
+            requestInformationButton.onClick.AddListener(() => deviceManager.RequestInformation(device.Id));
             device.OnConnected += () =>
             {
                 Debug.Log("Connected");
@@ -67,11 +71,37 @@ public class StressTest : MonoBehaviour
 
             Debug.Log("Stopping");
             deviceManager.Stop();
-            ready=false;
+
+            ready =false;
             connected = false;
             UpdateColor();
             yield return new WaitForSeconds(float.Parse( delayInputField.text));
             Debug.Log("Starting");
+            deviceManager = Devices.GetManager();
+            deviceManager.OnNewDevice += device =>
+            {
+                requestInformationButton.onClick.RemoveAllListeners();
+                requestInformationButton.onClick.AddListener(() => deviceManager.RequestInformation(device.Id));
+                device.OnConnected += () =>
+                {
+                    Debug.Log("Connected");
+                    connected = true;
+                    UpdateColor();
+                };
+                device.OnReady += () =>
+                {
+                    Debug.Log("Ready");
+                    ready = true;
+                    UpdateColor();
+                };
+                device.OnDisconnected += () =>
+                {
+                    Debug.Log("Disconnected");
+                    ready = false;
+                    connected = false;
+                    UpdateColor();
+                };
+            };
             deviceManager.Start();
             yield return new WaitForSeconds(float.Parse(delayInputField.text));
         }

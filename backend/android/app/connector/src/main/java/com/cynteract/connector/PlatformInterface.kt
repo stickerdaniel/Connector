@@ -66,6 +66,9 @@ open class Message(val type: String) {
     @Serializable
     data class Command(val deviceId: String, val command: DeviceCommand) : Message("command")
 
+
+    @Serializable
+    data class InformationRequest(val deviceId: String) : Message("informationRequest")
     @Serializable
     data class Debug(val deviceId: String, val message: String) : Message("debug")
 
@@ -104,6 +107,7 @@ open class Message(val type: String) {
                 "scan" -> JsonHelper.fromJson<Scan>(json)
                 "connect" -> JsonHelper.fromJson<Connect>(json)
                 "disconnect" -> JsonHelper.fromJson<Disconnect>(json)
+                "informationRequest"->JsonHelper.fromJson<InformationRequest>(json)
                 "data" -> JsonHelper.fromJson<Data>(json)
                 "command" -> JsonHelper.fromJson<Command>(json)
                 "debug" -> JsonHelper.fromJson<Debug>(json)

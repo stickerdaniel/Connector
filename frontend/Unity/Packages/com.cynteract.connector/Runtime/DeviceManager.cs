@@ -210,7 +210,7 @@ namespace Connector
 
                     case Message.Debug debugMessage:
                         {
-                            // Debug.Log("Debug: " + debugMessage.message);
+                             Debug.Log("Debug: " + debugMessage.message);
 
                             int seconds = 5;
                             string messagetext = debugMessage.message;
@@ -270,6 +270,11 @@ namespace Connector
         public void TriggerScan()
         {
             Message message = new Message.Scan { connectionType = "usb" };
+            SendMessage(message);
+        }
+        public void RequestInformation(string deviceId)
+        {
+            Message message = new Message.InformationRequest() { deviceId= deviceId };
             SendMessage(message);
         }
     }

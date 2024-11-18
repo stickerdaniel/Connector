@@ -115,6 +115,7 @@ class SerialDevice(
                 onDeviceDebug?.invoke(deviceName, debugReceive)
             } else if (buffer.data[0] == '{'.code.toByte()) {
                 try{
+                    onDeviceDebug?.invoke(deviceName,"Received Information")
                     // glove information sent as modified json without quotes
                     val information =
                         String(buffer.data, 0, buffer.offset - Protocol.PACKAGE_DELIM.size)
@@ -157,7 +158,6 @@ class SerialDevice(
             synchronized(writeLock) {
                 serial.write(packageSendBuffer, 500)
                 serial.write(Protocol.PACKAGE_DELIM, 500)
-
             }
         } catch (e: IOException) {
             onDeviceError?.invoke(deviceName, "Error writing data: ${e.message}")

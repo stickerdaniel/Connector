@@ -169,7 +169,15 @@ class DeviceCache(usb: HardwareInterface, bluetooth: HardwareInterface) {
                 // TODO: Handle Bluetooth
                 // hwInterfaces.bluetooth.startScan()
             }
-
+            is Message.InformationRequest->{
+                val  deviceId=message.deviceId
+                synchronized(messageLock){
+                    val device=devices[deviceId]
+                    if(device!=null){
+                        hwInterfaces.usb.requestInformation(deviceId)
+                    }
+                }
+            }
             is Message.Command -> {
                 val deviceId = message.deviceId
                 synchronized(messageLock) {

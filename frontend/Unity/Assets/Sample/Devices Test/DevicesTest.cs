@@ -1,10 +1,12 @@
 using Connector;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class DevicesTest : MonoBehaviour
 {
     IDeviceManager devices = Devices.GetManager();
-
+    [SerializeField]
+    private Button requestInformationButton;
     void Start()
     {
         Debug.Log("Starting");
@@ -12,6 +14,8 @@ public class DevicesTest : MonoBehaviour
 
         devices.OnNewDevice += (device) => 
         {
+            requestInformationButton.onClick.RemoveAllListeners();
+            requestInformationButton.onClick.AddListener(()=>devices.RequestInformation(device.Id));
             Debug.Log("New device " + device.Id);
             device.OnConnected += () => Debug.Log("Connected " + device.Id);
             device.OnDisconnected += () => Debug.Log("Disconnected " + device.Id);

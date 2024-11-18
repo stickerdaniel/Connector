@@ -79,6 +79,14 @@ namespace Connector
             public DeviceCommand command;
             public Command() { type = "command"; }
         }
+        public class InformationRequest : Message
+        {
+            public string deviceId;
+            public InformationRequest()
+            {
+                type = "informationRequest";
+            }
+        }
         public class Debug : Message
         {
             public string deviceId;
@@ -139,6 +147,9 @@ namespace Connector
                 case "command":
                     message = JsonHelper.FromJson<Command>(json);
                     break;
+                case "informationRequest":
+                    message=JsonHelper.FromJson<InformationRequest>(json);
+                    break ;
                 case "debug":
                     message = JsonHelper.FromJson<Debug>(json);
                     break;

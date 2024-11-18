@@ -21,6 +21,7 @@ namespace Connector
         IDevice? GetDevice(DeviceType type);
         // Explicitly trigger scan. There are automatic periodic scans without calling this function.
         void TriggerScan();
+        void RequestInformation(string deviceId);
         void Start();
         void Stop();
         event Action<IDevice> OnNewDevice;

@@ -165,6 +165,8 @@ class UsbReceiver : BroadcastReceiver(), HardwareInterface {
     }
 
     override fun requestInformation(id: String) {
+        onDeviceDebug?.invoke(this, id, "Requesting information")
+
         deviceMap[id]?.serialDevice?.requestInformation()
     }
 
