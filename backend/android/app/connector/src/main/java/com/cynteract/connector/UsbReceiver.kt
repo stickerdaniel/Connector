@@ -21,6 +21,7 @@ class UsbSerialDevice(
 }
 
 class UsbReceiver : BroadcastReceiver(), HardwareInterface {
+    private var closed: Boolean=false
     override val connectionType: String="usb"
     private lateinit var manager: UsbManager
     private lateinit var permissionIntent: PendingIntent
@@ -121,6 +122,7 @@ class UsbReceiver : BroadcastReceiver(), HardwareInterface {
 
     override fun onReceive(context: Context?, intent: Intent) {
         synchronized(this){
+            if(closed) return
             when (intent.action) {
                 ACTION_USB_PERMISSION -> {
                     Log.d("UsbReceiver", "Permission")
@@ -174,8 +176,15 @@ class UsbReceiver : BroadcastReceiver(), HardwareInterface {
         deviceMap[id]?.serialDevice?.sendData(data)
     }
 
+    override fun close(context: Context) {
+        synchronized(this) {
+            closed=true
+            deviceMap.keys.forEach { device ->
+                val serialDevice = deviceMap[device]!!.serialDevice
+                serialDevice.close()
+            }
+        }
+    }
+    }
 
 
-
-
-}

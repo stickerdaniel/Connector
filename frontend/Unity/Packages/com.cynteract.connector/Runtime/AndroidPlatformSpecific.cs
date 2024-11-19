@@ -24,13 +24,19 @@ namespace Connector {
             AndroidJavaObject unityActivity = unityPlayerClass.GetStatic<AndroidJavaObject>("currentActivity");
 
             // add message listener that
-            main =
             main = new AndroidJavaObject("com.cynteract.connector.Main", new MessageListener(deviceManager));
             main.Call("initialize", unityActivity);
         }
 
         public void Stop()
         {
+            if(main == null) {
+                Debug.LogWarning("Connector not running, nothing to stop");
+                return;
+            }
+            AndroidJavaClass unityPlayerClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
+            AndroidJavaObject unityActivity = unityPlayerClass.GetStatic<AndroidJavaObject>("currentActivity");
+            main.Call("close", unityActivity);
         }
 
         public void SendMessage(Message message)

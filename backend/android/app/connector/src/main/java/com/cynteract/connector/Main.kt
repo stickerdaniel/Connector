@@ -12,7 +12,9 @@ class Main(private val messageCallback: MessageListener) {
         deviceCache.onMessageOut = { message -> message.write { messageCallback.onMessage(it) } }
         usb.init(context)
     }
-
+    fun close(context: Context){
+        usb.close(context)
+    }
     fun onCommand(command: String) {
         val message = Message.readLine(command)
         deviceCache.onMessageIn(message)

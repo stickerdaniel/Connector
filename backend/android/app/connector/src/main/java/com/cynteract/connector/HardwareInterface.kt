@@ -19,5 +19,7 @@ interface HardwareInterface {
 
     fun requestInformation(id: String)
     fun sendData(id: String, data: DataSend)
+    fun close(context: Context)
+
     val connectionType: String
 }
