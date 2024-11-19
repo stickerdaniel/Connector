@@ -57,10 +57,13 @@ namespace Connector
         {
             public string deviceId;
             public string connectionType;
-            public bool isConnected;
-            public string version;
-            public Information information;
             public Connect() { type = "connect"; }
+        }
+        public class InformationMessage : Message
+        {
+            public string deviceId;
+            public Information information;
+            public InformationMessage() { type = "information"; }
         }
         public class Disconnect : Message
         {
@@ -130,6 +133,7 @@ namespace Connector
             Message message = JsonHelper.FromJson<Message>(json);
             if (message == null)
                 throw new Exception("Failed to deserialize message");
+            
             switch (message.type)
             {
                 case "scan":
@@ -140,6 +144,9 @@ namespace Connector
                     break;
                 case "disconnect":
                     message = JsonHelper.FromJson<Disconnect>(json);
+                    break;
+                case "information":
+                    message =JsonHelper.FromJson<InformationMessage>(json);
                     break;
                 case "data":
                     message = JsonHelper.FromJson<Data>(json);

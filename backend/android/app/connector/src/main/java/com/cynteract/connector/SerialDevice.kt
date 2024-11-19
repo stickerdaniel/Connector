@@ -17,6 +17,7 @@ class SerialDevice(
 
     private val readThread: Thread = Thread { readRoutine() }
     private val writeThread: Thread = Thread { writeRoutine() }
+    private val  startThread:Thread=Thread{startRoutine()}
     private val packageReadBuffer = PackageReadBuffer()
     private val packageSendBuffer = ByteArray(Protocol.DATA_SEND_SIZE)
     private val writeLock = Any()
@@ -37,6 +38,21 @@ class SerialDevice(
     public fun start() {
         Log.d(deviceName, "Starting device")
         running=true
+        startThread.start()
+    }
+    private fun startRoutine(){
+        while (!tryStart()){
+            try {
+                Thread.sleep(500)
+            }
+            catch (e: InterruptedException) {
+                onDeviceError?.invoke(deviceName, "Read routine interrupted: ${e.message}")
+                return
+            }
+        }
+    }
+
+    private fun  tryStart(): Boolean {
         try {
             //if (!device.serial.isOpen) {
             val connection: UsbDeviceConnection = usbManager.openDevice(driver.device)
@@ -52,19 +68,22 @@ class SerialDevice(
             onDeviceConnected?.invoke(deviceName)
             readThread.start()
             writeThread.start()
+            return true;
         } catch (e: IOException) {
             onDeviceError?.invoke(deviceName, "Error opening device: ${e.message}")
+            return false
         }
     }
-
     public fun close() {
         try {
             serial.close()
         } catch (e: IOException) {
             onDeviceError?.invoke(deviceName, "Error closing device: ${e.message}")
         }
+        startThread.interrupt()
         readThread.interrupt()
         writeThread.interrupt()
+        startThread.join()
         readThread.join()
         writeThread.join()
 

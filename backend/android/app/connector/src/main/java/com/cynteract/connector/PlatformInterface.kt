@@ -52,10 +52,12 @@ open class Message(val type: String) {
     data class Connect(
         val deviceId: String,
         val connectionType: String,
-        val isConnected: Boolean,
-        val version: String,
-        val information: InformationV1Out
     ) : Message("connect")
+    @Serializable
+    data class InformationMessage(
+        val deviceId: String,
+        val information:InformationV1Out
+    ) : Message("information")
 
     @Serializable
     data class Disconnect(val deviceId: String) : Message("disconnect")
@@ -82,6 +84,7 @@ open class Message(val type: String) {
             is Connect -> JsonHelper.toJson(this)
             is Disconnect -> JsonHelper.toJson(this)
             is Data -> JsonHelper.toJson(this)
+            is InformationMessage->JsonHelper.toJson(this)
             is Command -> JsonHelper.toJson(this)
             is Debug -> JsonHelper.toJson(this)
             is Error -> JsonHelper.toJson(this)
@@ -109,6 +112,7 @@ open class Message(val type: String) {
                 "disconnect" -> JsonHelper.fromJson<Disconnect>(json)
                 "informationRequest"->JsonHelper.fromJson<InformationRequest>(json)
                 "data" -> JsonHelper.fromJson<Data>(json)
+                "information"->JsonHelper.fromJson<InformationMessage>(json)
                 "command" -> JsonHelper.fromJson<Command>(json)
                 "debug" -> JsonHelper.fromJson<Debug>(json)
                 "error" -> JsonHelper.fromJson<Error>(json)

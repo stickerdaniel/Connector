@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class StressTest : MonoBehaviour
 {
-    IDeviceManager deviceManager = Devices.GetManager();
+    DeviceManager deviceManager = new DeviceManager();
     [SerializeField]
     private Color gloveNotConnectedColor = Color.red;
     [SerializeField]
@@ -38,30 +38,25 @@ public class StressTest : MonoBehaviour
             StopAllCoroutines();
             StartCoroutine(RestartDeviceManagerCoroutine());
         });
-        deviceManager.OnNewDevice += device =>
+        deviceManager.OnDeviceConnected+= device =>
         {
             requestInformationButton.onClick.RemoveAllListeners();
             requestInformationButton.onClick.AddListener(() => deviceManager.RequestInformation(device.Id));
-            device.OnConnected += () =>
-            {
-                Debug.Log("Connected");
-                connected = true;
-                UpdateColor();
-            };
+            connected = true;
+            UpdateColor();
             device.OnReady += () =>
             {
                 Debug.Log("Ready");
                 ready = true;
                 UpdateColor();
             };
-            device.OnDisconnected += () =>
-            {
-                Debug.Log("Disconnected");
-                ready = false;
-                connected = false;
-                UpdateColor();
-            };
         };
+        deviceManager.OnDeviceDisconnected += device => {
+            ready = false;
+            connected = false;
+            UpdateColor();
+        };
+
     }
 
     IEnumerator RestartDeviceManagerCoroutine()
@@ -71,37 +66,11 @@ public class StressTest : MonoBehaviour
 
             Debug.Log("Stopping");
             deviceManager.Stop();
-
             ready =false;
             connected = false;
             UpdateColor();
             yield return new WaitForSeconds(float.Parse( delayInputField.text));
             Debug.Log("Starting");
-            deviceManager = Devices.GetManager();
-            deviceManager.OnNewDevice += device =>
-            {
-                requestInformationButton.onClick.RemoveAllListeners();
-                requestInformationButton.onClick.AddListener(() => deviceManager.RequestInformation(device.Id));
-                device.OnConnected += () =>
-                {
-                    Debug.Log("Connected");
-                    connected = true;
-                    UpdateColor();
-                };
-                device.OnReady += () =>
-                {
-                    Debug.Log("Ready");
-                    ready = true;
-                    UpdateColor();
-                };
-                device.OnDisconnected += () =>
-                {
-                    Debug.Log("Disconnected");
-                    ready = false;
-                    connected = false;
-                    UpdateColor();
-                };
-            };
             deviceManager.Start();
             yield return new WaitForSeconds(float.Parse(delayInputField.text));
         }
