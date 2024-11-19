@@ -1,10 +1,10 @@
 {
-    "name": "com.cynteract.connector",
-    "version": "1.0.8",
-    "displayName": "Cynteract Connector",
-    "description": "Connecting the hardware devices to the Unity application",
-    "unity": "2022.3",
-    "documentationUrl": "https://github.com/Cynteract/Connector",
-    "author": "Cynteract",
-    "postProcess": "Assets/Editor/PackageSetup.cs"
+  "name": "com.cynteract.connector",
+  "version": "1.1.0-beta.1",
+  "displayName": "Cynteract Connector",
+  "description": "Connecting the hardware devices to the Unity application",
+  "unity": "2022.3",
+  "documentationUrl": "https://github.com/Cynteract/Connector",
+  "author": "Cynteract",
+  "postProcess": "Assets/Editor/PackageSetup.cs"
 }
