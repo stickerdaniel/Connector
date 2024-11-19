@@ -8,6 +8,7 @@
 //
 #nullable disable
 
+using Microsoft.VisualBasic;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -65,10 +66,13 @@ namespace Connector
         {
             public string deviceId;
             public string connectionType;
-            public bool isConnected;
-            public string version;
-            public InformationV1Out information;
             public Connect() { type = "connect"; }
+        }
+        public class InformationMessage : Message
+        {
+            public string deviceId;
+            public InformationV1Out information;
+            public InformationMessage() { type = "information"; }
         }
         public class Disconnect : Message
         {
@@ -87,6 +91,14 @@ namespace Connector
             public DeviceCommand command;
             public Command() { type = "command"; }
         }
+        public class InformationRequest : Message
+        {
+            public string deviceId;
+            public InformationRequest()
+            {
+                type = "informationRequest";
+            }
+        }
         public class Debug : Message
         {
             public string deviceId;
@@ -99,6 +111,7 @@ namespace Connector
             public string message;
             public Error() { type = "error"; }
         }
+
 
 
         private readonly static object syncLock = new object();
@@ -130,6 +143,7 @@ namespace Connector
             Message message = JsonHelper.FromJson<Message>(json);
             if (message == null)
                 throw new Exception("Failed to deserialize message");
+
             switch (message.type)
             {
                 case "scan":
@@ -141,11 +155,17 @@ namespace Connector
                 case "disconnect":
                     message = JsonHelper.FromJson<Disconnect>(json);
                     break;
+                case "information":
+                    message = JsonHelper.FromJson<InformationMessage>(json);
+                    break;
                 case "data":
                     message = JsonHelper.FromJson<Data>(json);
                     break;
                 case "command":
                     message = JsonHelper.FromJson<Command>(json);
+                    break;
+                case "informationRequest":
+                    message = JsonHelper.FromJson<InformationRequest>(json);
                     break;
                 case "debug":
                     message = JsonHelper.FromJson<Debug>(json);

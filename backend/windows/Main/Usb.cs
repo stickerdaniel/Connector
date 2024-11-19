@@ -157,6 +157,7 @@ namespace Connector
 
         private void DeviceOnDeviceInformation(string portName, InformationV1In information)
         {
+            OnDeviceDebug?.Invoke(this, portName, "Received Information");
             OnDeviceInformation?.Invoke(this, portName, information);
         }
 
