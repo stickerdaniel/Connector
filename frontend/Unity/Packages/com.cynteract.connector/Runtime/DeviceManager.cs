@@ -53,7 +53,6 @@ namespace Connector
         {
             try
             {
-                //Debug.Log(messageString);
                 // deserialize twice as described in https://docs.unity3d.com/2020.1/Documentation/Manual/JSONSerialization.html
                 Message message = Message.FromJson(messageString);
 
@@ -102,6 +101,11 @@ namespace Connector
                         {
                             Debug.LogError("Received data for an unknown device: " + dataMessage.deviceId);
                             return;
+                        }
+                        if (Devices[dataMessage.deviceId].Information == null)
+                        {
+                            Debug.Log("Data arrived, requesting Information");
+                            RequestInformation(dataMessage.deviceId);
                         }
                         Devices[dataMessage.deviceId].RaiseData(dataMessage.data);
                         return;
