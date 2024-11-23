@@ -73,13 +73,26 @@ namespace Connector
             {
                 try
                 {
+                    bool requestedConnection = false;
                     while (!dataSendQueue.IsEmpty)
                     {
                         if (dataSendQueue.TryDequeue(out DataSend dataSend))
                         {
+                            if (dataSend.requestInformation)
+                            {
+                                if (requestedConnection)
+                                {
+                                    continue;
+                                }
+                                else
+                                {
+                                    requestedConnection = true;
+                                }
+                            }
                             Console.WriteLine("Sending data");
                             SendData(dataSend);
                         }
+                        Thread.Sleep(50);
                     }
                 }
 

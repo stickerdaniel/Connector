@@ -148,7 +148,7 @@ class SerialDevice(
                 }
                 catch (ex:Exception){
                     onDeviceError?.invoke(deviceName,ex.toString());
-                    requestInformation()
+                    //requestInformation()
                 }
             }
 
@@ -213,10 +213,21 @@ class SerialDevice(
     private fun writeRoutine() {
         while (!Thread.currentThread().isInterrupted) {
             try {
+                //Only request information once
+                var requestedInformation=false;
                 while (!dataSendQueue.isEmpty()) {
-                    sendDataImmediately(dataSendQueue.remove())
+                    val data=dataSendQueue.remove()
+                    if(data.requestInformation){
+                        if(requestedInformation){
+                            continue
+                        }
+                        else{
+                            requestedInformation=true
+                        }
+                    }
+                    sendDataImmediately(data)
+                    Thread.sleep(50)
                 }
-                Thread.sleep(5)
             } catch (e: InterruptedException) {
                 onDeviceError?.invoke(deviceName, "Write routine interrupted: ${e.message}")
                 return
