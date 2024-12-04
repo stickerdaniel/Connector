@@ -48,7 +48,7 @@ namespace Connector
             Debug.Log("Device received information");
 
             Information = information;
-            DeviceType deviceType = information.hand switch
+            DeviceType = information.hand switch
             {
                 "Links" => DeviceType.Left,
                 "Rechts" => DeviceType.Right,

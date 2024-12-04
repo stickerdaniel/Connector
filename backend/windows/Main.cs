@@ -10,10 +10,9 @@ namespace Connector
         readonly Usb usb = new();
         readonly Ble bluetooth = new();
         readonly DeviceCache deviceCache;
-        Program(string jsonPath)
+        Program()
         {
-            deviceCache = new DeviceCache(usb, bluetooth, jsonPath);
-            deviceCache.LoadInformationJson();
+            deviceCache = new DeviceCache(usb, bluetooth);
             deviceCache.OnMessageOut += (message) => message.Write(Console.Out);
             usb.Init();
         }
@@ -30,21 +29,14 @@ namespace Connector
             {
                 case ["test"]:
                     return Test.Program.Main(args);
-                case ["jsonPath", var path]:
-                    return RunMainProgram(path);
                 default:
-                    return RunMainProgram(
-                        Path.Combine( 
-                            AppDomain.CurrentDomain.BaseDirectory,
-                            "StandardDeviceInformation.json"
-                            )
-                        );
+                    return RunMainProgram();
             }
         }
-        static int RunMainProgram(string jsonPath)
+        static int RunMainProgram()
         {
             new Message.Debug { message = "Backend started." }.Write(Console.Out);
-            Program program = new Program(jsonPath);
+            Program program = new Program();
             bool exit = false;
             while (!exit)
             {

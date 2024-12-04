@@ -2,12 +2,14 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using UnityEngine;
 using Debug = UnityEngine.Debug;
 
 namespace Connector
 {
-    public partial class DeviceManager
+    public class DeviceManager
     {
         private Dictionary<string, (DateTime lastLoggedTime, int count)> messageLog = new();
 
@@ -15,7 +17,7 @@ namespace Connector
 
         public Dictionary<string, Device> Devices { get; private set; } = new();
 
-
+        private string jsonPath;
 
         public event Action<Device>? OnDeviceConnected;
         public event Action<Device>? OnDeviceDisconnected;
@@ -24,6 +26,8 @@ namespace Connector
         public void Start()
         {
             Devices = new();
+            jsonPath = Path.Combine(Application.persistentDataPath, "StandardDeviceInformation.json");
+
             platformSpecific.Start(this);
         }
 
@@ -74,8 +78,15 @@ namespace Connector
                                 DeviceType.Unknown,
                                 connectionType
                                 );
+
                             Devices.Add(connectMessage.deviceId, newDevice);
                             OnDeviceConnected?.Invoke(Devices[connectMessage.deviceId]);
+                            var standardInfo = LoadStandardDeviceInformation();
+                            if (standardInfo != null)
+                            {
+                                Devices[connectMessage.deviceId].RaiseInformation(standardInfo);
+                            }
+                            
                         }
                         return;
                     case Message.Disconnect disconnectMessage:
@@ -94,6 +105,7 @@ namespace Connector
                             Debug.LogError("Received information for an unknown device: " + infoMessage.deviceId);
                             return;
                         }
+                        SaveStandardDeviceInformation(infoMessage.information);
                         Devices[infoMessage.deviceId].RaiseInformation(infoMessage.information);
                         return;
                     case Message.Data dataMessage:
@@ -183,6 +195,20 @@ namespace Connector
         {
             Message message = new Message.InformationRequest() { deviceId = deviceId };
             SendMessage(message);
+        }
+        public void SaveStandardDeviceInformation(Information information)
+        {
+            var informationJson=JsonHelper.ToJson(information);
+            File.WriteAllText(jsonPath, informationJson);
+        }
+        public Information? LoadStandardDeviceInformation()
+        {
+            if (!File.Exists(jsonPath))
+            {
+                return null;
+            }
+            var informationJson=File.ReadAllText(jsonPath);
+            return JsonHelper.FromJson<Information>(informationJson);
         }
     }
 }

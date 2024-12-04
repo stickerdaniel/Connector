@@ -37,9 +37,7 @@ namespace Connector
         }
         readonly HWInterfaces hwInterfaces;
 
-        private readonly string informationJsonPath;
-        private InformationV1Out? standardInformation;
-        public DeviceCache(HardwareInterface usb, HardwareInterface bluetooth, string informationJsonPath)
+        public DeviceCache(HardwareInterface usb, HardwareInterface bluetooth)
         {
             hwInterfaces = new HWInterfaces
             {
@@ -56,40 +54,8 @@ namespace Connector
                 hwi.OnDeviceData += HWOnDeviceData;
                 hwi.OnDeviceDebug += HWOnDeviceDebug;
             }
-            this.informationJsonPath = informationJsonPath;
         }
-        public void LoadInformationJson()
-        {
-            new Message.Debug { message = $"Loading standard information Json at {informationJsonPath}" }.Write(Console.Out);
-            if (!File.Exists(informationJsonPath))
-            {
-                new Message.Debug { message = "No standard information Json found" }.Write(Console.Out);
-                return;
-            }
-            try
-            {
-                string fileText = File.ReadAllText(informationJsonPath);
-                new Message.Debug { message = $"Standard information Json found: {fileText}" }.Write(Console.Out);
-                standardInformation = JsonHelper.FromJson<InformationV1Out>(fileText);
-            }
-            catch (Exception e)
-            {
-                Console.Error.WriteLine($"Exception while reading standard information json {e}");
-            }
-        }
-        public void SaveInformationJson()
-        {
-            new Message.Debug { message = $"Saving standard information Json" }.Write(Console.Out);
-            try
-            {
-                var fileText = JsonHelper.ToJson(standardInformation);
-                File.WriteAllText(path: informationJsonPath, contents: fileText);
-            }
-            catch (Exception e)
-            {
-                Console.Error.WriteLine($"Exception while saving standard information json {e}");
-            }
-        }
+
         readonly object messageLock = new();
         public void HWOnDeviceConnected(HardwareInterface sender, string deviceId)
         {
@@ -109,7 +75,7 @@ namespace Connector
                 deviceId = deviceId,
                 connectionType = device.connectionType,
             });
-            
+
         }
         public void HWOnDeviceDisconnected(HardwareInterface sender, string deviceId)
         {
