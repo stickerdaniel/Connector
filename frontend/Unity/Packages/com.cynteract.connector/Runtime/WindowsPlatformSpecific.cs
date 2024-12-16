@@ -6,8 +6,9 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Text.RegularExpressions;
 using UnityEngine;
-
+#nullable enable
 namespace Connector
 {
     class WindowsPlatformSpecific:IPlatformSpecific
@@ -16,8 +17,9 @@ namespace Connector
 
         public void Start(DeviceManager deviceManager)
         {
+
             process = new Process();
-            process.StartInfo.FileName = System.IO.Path.Combine(Application.streamingAssetsPath, "Connector.exe");
+            process.StartInfo.FileName = GetConnectorExeFilePath();
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.RedirectStandardOutput = true;
             process.StartInfo.RedirectStandardError = true;
@@ -65,6 +67,19 @@ namespace Connector
                 throw new Exception("Backend is not running");
 
             message.Write(process.StandardInput);
+        }
+        public string? GetConnectorExeFilePath()
+        {
+            var files = Directory.GetFiles(Application.streamingAssetsPath);
+            foreach (var file in files)
+            {
+                string fileName = Path.GetFileName(file);
+                if (Regex.IsMatch(fileName, "Connector.*exe")&&!fileName.Contains(".meta"))
+                {
+                    return file;
+                }
+            }
+            return null;
         }
     }
 }

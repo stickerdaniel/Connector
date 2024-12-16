@@ -37,9 +37,9 @@ sysinfo.txt
 !/[Aa]ssets/**/*.meta
 
 # binaries
-Connector.exe
-Connector.exe.meta
+Connector*.exe
+Connector*.exe.meta
 Connector.pdb
 Connector.pdb.meta
-connector-release.aar
-connector-release.aar.meta
+connector-release*.aar
+connector-release*.aar.meta
