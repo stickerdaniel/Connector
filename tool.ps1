@@ -5,6 +5,10 @@ param (
 
 function build_android {
     Write-Output "Building Android connector..."
+    # get tag from package.json
+    $packageJsonContent = Get-Content -Path "frontend/Unity/Packages/com.cynteract.connector/package.json" | ConvertFrom-Json
+    $version = $packageJsonContent.version
+    $tag = "v$version"
     Push-Location .\backend\android
     # use Unity Android SDK if not specified
     if (-not $env:JAVE_HOME) {
@@ -19,14 +23,24 @@ function build_android {
     }
     .\gradlew :app:connector:assembleRelease
     Write-Output "Copying Android connector to Unity project..."
-    Copy-Item -Path .\app\connector\build\outputs\aar\connector-release.aar -Destination .\..\..\frontend\Unity\Assets -Force
+    Copy-Item -Path .\app\connector\build\outputs\aar\connector-release.aar -Destination .\..\..\frontend\Unity\Assets\connector-release_$tag.aar -Force
     Pop-Location
 }
 
 function build_windows {
     Write-Output "Building Windows connector..."
+    # get tag from package.json
+    $packageJsonContent = Get-Content -Path "frontend/Unity/Packages/com.cynteract.connector/package.json" | ConvertFrom-Json
+    $version = $packageJsonContent.version
+    $tag = "v$version"
+
     Push-Location .\backend\windows
     dotnet publish -c Release -r win10-x64 --self-contained -o ../../frontend/Unity/Assets/StreamingAssets Connector.csproj
+
+
+
+    Move-Item -Path .\..\..\frontend\Unity\Assets\StreamingAssets\Connector.exe -Destination .\..\..\frontend\Unity\Assets\StreamingAssets\Connector_$tag.exe -Force
+
     Pop-Location
 }
 
@@ -92,7 +106,7 @@ function upload_release {
     }
     git push origin $tag
     gh release delete $tag --yes
-    gh release create $tag --generate-notes frontend/Unity/Assets/connector-release.aar frontend/Unity/Assets/StreamingAssets/Connector.exe
+    gh release create $tag --generate-notes frontend/Unity/Assets/connector-release_$tag.aar frontend/Unity/Assets/StreamingAssets/Connector_$tag.exe
 }
 
 switch ($argument) {
