@@ -84,7 +84,7 @@ namespace Connector
                             var standardInfo = LoadStandardDeviceInformation();
                             if (standardInfo != null)
                             {
-                                Devices[connectMessage.deviceId].RaiseInformation(standardInfo);
+                                Devices[connectMessage.deviceId].RaiseStandardDeviceInformation(standardInfo);
                             }
                             
                         }
@@ -106,7 +106,7 @@ namespace Connector
                             return;
                         }
                         SaveStandardDeviceInformation(infoMessage.information);
-                        Devices[infoMessage.deviceId].RaiseInformation(infoMessage.information);
+                        Devices[infoMessage.deviceId].RaiseDeviceInformation(infoMessage.information);
                         return;
                     case Message.Data dataMessage:
                         if (!Devices.ContainsKey(dataMessage.deviceId))
@@ -114,9 +114,10 @@ namespace Connector
                             Debug.LogError("Received data for an unknown device: " + dataMessage.deviceId);
                             return;
                         }
-                        if (Devices[dataMessage.deviceId].Information == null)
+                        if (!Devices[dataMessage.deviceId].ReceivedInformationFromDevice && DateTime.Now- Devices[dataMessage.deviceId].LastInformationRequest>TimeSpan.FromSeconds(1))
                         {
                             Debug.Log("Data arrived, requesting Information");
+                            Devices[dataMessage.deviceId].LastInformationRequest=DateTime.Now;
                             RequestInformation(dataMessage.deviceId);
                         }
                         Devices[dataMessage.deviceId].RaiseData(dataMessage.data);

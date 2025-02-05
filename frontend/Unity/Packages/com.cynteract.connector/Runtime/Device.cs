@@ -13,7 +13,8 @@ namespace Connector
         public ConnectionType ConnectionType { get; private set; }
         public Dataframe? LastData { get; private set; }
         public bool IsReady { get; private set; }
-
+        public bool ReceivedInformationFromDevice { get;private set; }
+        public DateTime LastInformationRequest { get; set; }
 
         public event Action<Dataframe>? OnData;
         public event Action<Information>? OnInformation;
@@ -42,10 +43,21 @@ namespace Connector
         {
             OnError?.Invoke(e);
         }
-
-        public void RaiseInformation(Information information)
+        public void RaiseStandardDeviceInformation(Information information)
         {
-            Debug.Log("Device received information");
+            Debug.Log("Device loaded Standard device information");
+            HandleInformation(information);
+
+        }
+        public void RaiseDeviceInformation(Information information)
+        {
+            Debug.Log("Device received information from Device");
+            ReceivedInformationFromDevice = true; 
+            HandleInformation(information);
+        }
+        public void HandleInformation(Information information)
+        {
+
 
             Information = information;
             DeviceType = information.hand switch
