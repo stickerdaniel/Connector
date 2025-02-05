@@ -52,7 +52,9 @@ namespace Connector
             {
                 "Links" => DeviceType.Left,
                 "Rechts" => DeviceType.Right,
-                _ => DeviceType.Beacon
+                "Strap" => DeviceType.Strap,
+                "Cushion"=>DeviceType.Cushion,
+                _=> DeviceType.Unknown
             };
             OnInformation?.Invoke(information);
         }

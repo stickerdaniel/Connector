@@ -5,7 +5,7 @@ namespace Connector
 {
     public enum DeviceType
     {
-        Unknown,Left, Right, Beacon
+        Unknown,Left, Right, Strap,Cushion
     }
 
 
