@@ -16,9 +16,8 @@ namespace Connector
         IPlatformSpecific platformSpecific = PlatformSelection.GetPlatformSpecific();
 
         public Dictionary<string, Device> Devices { get; private set; } = new();
-
-        private string jsonPath;
-
+        
+        private StandardDeviceInformationManager standardDeviceInformationManager=null!;//will be initialized in Start
         public event Action<Device>? OnDeviceConnected;
         public event Action<Device>? OnDeviceDisconnected;
         public event Action<Exception>? OnError;
@@ -26,8 +25,9 @@ namespace Connector
         public void Start()
         {
             Devices = new();
-            jsonPath = Path.Combine(Application.persistentDataPath, "StandardDeviceInformation.json");
-
+            string jsonPath = Path.Combine(Application.persistentDataPath, "StandardDeviceInformation.json");
+            standardDeviceInformationManager= new StandardDeviceInformationManager(jsonPath);
+            standardDeviceInformationManager.Init();
             platformSpecific.Start(this);
         }
 
@@ -81,7 +81,7 @@ namespace Connector
 
                             Devices.Add(connectMessage.deviceId, newDevice);
                             OnDeviceConnected?.Invoke(Devices[connectMessage.deviceId]);
-                            var standardInfo = LoadStandardDeviceInformation();
+                            var standardInfo = standardDeviceInformationManager.LoadInformation(connectMessage.deviceId);
                             if (standardInfo != null)
                             {
                                 Devices[connectMessage.deviceId].RaiseStandardDeviceInformation(standardInfo);
@@ -105,7 +105,7 @@ namespace Connector
                             Debug.LogError("Received information for an unknown device: " + infoMessage.deviceId);
                             return;
                         }
-                        SaveStandardDeviceInformation(infoMessage.information);
+                        standardDeviceInformationManager.UpdateInformation(infoMessage.deviceId,infoMessage.information);
                         Devices[infoMessage.deviceId].RaiseDeviceInformation(infoMessage.information);
                         return;
                     case Message.Data dataMessage:
@@ -196,20 +196,6 @@ namespace Connector
         {
             Message message = new Message.InformationRequest() { deviceId = deviceId };
             SendMessage(message);
-        }
-        public void SaveStandardDeviceInformation(Information information)
-        {
-            var informationJson=JsonHelper.ToJson(information);
-            File.WriteAllText(jsonPath, informationJson);
-        }
-        public Information? LoadStandardDeviceInformation()
-        {
-            if (!File.Exists(jsonPath))
-            {
-                return null;
-            }
-            var informationJson=File.ReadAllText(jsonPath);
-            return JsonHelper.FromJson<Information>(informationJson);
         }
     }
 }
