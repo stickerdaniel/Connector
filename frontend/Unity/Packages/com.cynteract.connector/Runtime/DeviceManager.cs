@@ -25,7 +25,7 @@ namespace Connector
         public void Start()
         {
             Devices = new();
-            string jsonPath = Path.Combine(Application.persistentDataPath, "StandardDeviceInformation.json");
+            string jsonPath = Path.Combine(Application.persistentDataPath, "StandardDeviceInformationDictionary.json");
             standardDeviceInformationManager= new StandardDeviceInformationManager(jsonPath);
             standardDeviceInformationManager.Init();
             platformSpecific.Start(this);
