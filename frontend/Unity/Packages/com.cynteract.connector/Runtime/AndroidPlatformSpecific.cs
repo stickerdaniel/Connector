@@ -1,6 +1,7 @@
 using UnityEngine;
-namespace Connector {
-    class AndroidPlatformSpecific:IPlatformSpecific
+namespace Connector
+{
+    class AndroidPlatformSpecific : IPlatformSpecific
     {
 
         AndroidJavaObject main;
@@ -30,7 +31,8 @@ namespace Connector {
 
         public void Stop()
         {
-            if(main == null) {
+            if (main == null)
+            {
                 Debug.LogWarning("Connector not running, nothing to stop");
                 return;
             }
@@ -39,9 +41,9 @@ namespace Connector {
             main.Call("close", unityActivity);
         }
 
-        public void SendMessage(Message message)
+        public void SendMessage(string serializedMessage)
         {
-            main.Call("onCommand", message.ToJson());
+            main.Call("sendMessage", serializedMessage);
         }
     }
 }

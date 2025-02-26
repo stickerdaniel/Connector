@@ -5,7 +5,7 @@ using UnityEngine;
 
 public interface IPlatformSpecific
 {
-    void SendMessage(Message message);
+    void SendMessage(string serializedMessage);
     void Start(DeviceManager deviceManager);
     void Stop();
 }

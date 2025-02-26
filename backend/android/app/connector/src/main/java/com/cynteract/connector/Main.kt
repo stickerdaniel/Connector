@@ -1,26 +1,40 @@
 package com.cynteract.connector
 
 import android.content.Context
+import com.cynteract.connector.usb.UsbReceiver
+
 
 class Main(private val messageCallback: MessageListener) {
     val usb = UsbReceiver()
     val bluetooth: Ble = Ble()
     val deviceCache: DeviceCache =
         DeviceCache(usb, bluetooth)
+    private val syncLock = Any()
 
     fun initialize(context: Context) {
-        deviceCache.onMessageOut = { message -> message.write { messageCallback.onMessage(it) } }
+        deviceCache.onMessage = { deviceId, message ->
+            messageCallback.onMessage(
+                Protocol.serialize(
+                    deviceId,
+                    message
+                )
+            )
+        }
         usb.init(context)
     }
-    fun close(context: Context){
+
+    fun close(context: Context) {
         usb.close(context)
     }
-    fun onCommand(command: String) {
-        val message = Message.readLine(command)
-        deviceCache.onMessageIn(message)
+
+    fun sendMessage(messageLine: String) {
+        val (deviceId, message) = Protocol.deserialize(messageLine)
+        synchronized(syncLock) {
+            deviceCache.sendMessage(deviceId, message)
+        }
     }
 }
 
 interface MessageListener {
-    fun onMessage(command: String)
+    fun onMessage(message: String)
 }

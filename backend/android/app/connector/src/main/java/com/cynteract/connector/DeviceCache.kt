@@ -1,10 +1,14 @@
 package com.cynteract.connector
 
+import com.cynteract.connector.messages.Disconnect
+import com.cynteract.connector.messages.Error
+import com.cynteract.connector.messages.Scan
+
 
 class DeviceCache(usb: HardwareInterface, bluetooth: HardwareInterface) {
 
 
-    var onMessageOut: ((Message) -> Unit)? = null
+    var onMessage: ((String, Any) -> Unit)? = null
 
     data class Device(
         val deviceId: String,
@@ -25,46 +29,26 @@ class DeviceCache(usb: HardwareInterface, bluetooth: HardwareInterface) {
                 { sender, deviceId -> hardwareOnDeviceDisconnected(sender, deviceId) }
             hwi.onDeviceError =
                 { sender, deviceId, message -> hardwareOnDeviceError(sender, deviceId, message) }
-            hwi.onDeviceInformation = { sender, deviceId, information ->
-                hardwareOnDeviceInformation(
-                    sender,
-                    deviceId,
-                    information
-                )
-            }
-            hwi.onDeviceData = { sender, deviceId, data -> hardwareOnDeviceData(sender, deviceId, data) }
-            hwi.onDeviceDebug =
-                { sender, deviceId, message -> hardwareOnDeviceDebug(sender, deviceId, message) }
+            hwi.onDeviceMessage =
+                { sender, deviceId, message ->
+                    hardwareOnDeviceMessage(
+                        sender,
+                        deviceId,
+                        message
+                    )
+                }
         }
     }
 
     private val messageLock = Any()
-    private fun transformIndexDictToList(dict: Map<String, String>): List<String> {
-        val maxKey = dict.keys.map { it.toInt() }.maxOrNull() ?: 0
-        val list = MutableList(maxKey + 1) { "" }
-        for (item in dict) {
-            list[item.key.toInt()] = item.value
-        }
-        return list
-    }
-
-    private fun transformInformationV1InToOut(information: InformationV1In): InformationV1Out {
-        return InformationV1Out(
-            version = "1",
-            hand = information.Hand,
-            vibration = transformIndexDictToList(information.Vibration),
-            imu = transformIndexDictToList(information.IMU)
-        )
-    }
 
     private fun hardwareOnDeviceConnected(sender: HardwareInterface, deviceId: String) {
         val device = devices.computeIfAbsent(deviceId) {
             Device(deviceId, sender.connectionType)
         }
-        sender.requestInformation(deviceId)
-        onMessageOut?.invoke(
-            Message.Connect(
-                deviceId = deviceId,
+        onMessage?.invoke(
+            deviceId,
+            com.cynteract.connector.messages.Connect(
                 connectionType = device.connectionType
             )
         )
@@ -72,7 +56,7 @@ class DeviceCache(usb: HardwareInterface, bluetooth: HardwareInterface) {
 
     private fun hardwareOnDeviceDisconnected(sender: HardwareInterface, deviceId: String) {
         devices.remove(deviceId)
-        onMessageOut?.invoke(Message.Disconnect(deviceId = deviceId))
+        onMessage?.invoke(deviceId, Disconnect())
     }
 
     private fun hardwareOnDeviceError(
@@ -80,50 +64,28 @@ class DeviceCache(usb: HardwareInterface, bluetooth: HardwareInterface) {
         deviceId: String,
         message: String
     ) {
-        onMessageOut?.invoke(Message.Error(deviceId = deviceId, message = message))
-    }
-
-
-    private fun hardwareOnDeviceInformation(
-        sender: HardwareInterface,
-        deviceId: String,
-        informationIn: InformationV1In
-    ) {
-        val informationOut: InformationV1Out = transformInformationV1InToOut(informationIn)
-        onMessageOut?.invoke(
-            Message.InformationMessage(deviceId, informationOut)
-        )
-    }
-
-    private fun hardwareOnDeviceData(sender: HardwareInterface, deviceId: String, data: DataReceive) {
-        onMessageOut?.invoke(
-            Message.Data(
-                deviceId = deviceId,
-                data = Dataframe(
-                    force = data.force,
-                    imu = data.imu.map { quaternion ->
-                        Dataframe.IMUData(
-                            x = quaternion.x,
-                            y = quaternion.y,
-                            z = quaternion.z,
-                            w = quaternion.w
-                        )
-                    }.toTypedArray(),
-                    imuStatus = data.imuStatus,
-                    vibStatus = data.vibStatus
-                )
+        onMessage?.invoke(
+            deviceId,
+            Error(
+                message = message
             )
         )
     }
 
-
-    private fun hardwareOnDeviceDebug(sender: HardwareInterface, deviceId: String, message: String) {
-        onMessageOut?.invoke(Message.Debug(deviceId = deviceId, message = message))
+    private fun hardwareOnDeviceMessage(
+        sender: HardwareInterface,
+        deviceId: String,
+        deviceMessage: Any
+    ) {
+        onMessage?.invoke(
+            deviceId,
+            deviceMessage
+        )
     }
 
-    fun onMessageIn(message: Message) {
+    fun sendMessage(deviceId: String?, message: Any) {
         when (message) {
-            is Message.Scan -> {
+            is Scan -> {
                 if (message.connectionType == ConnectionType.Usb) {
                     //hwInterfaces.usb.startScan()
                 }
@@ -131,34 +93,21 @@ class DeviceCache(usb: HardwareInterface, bluetooth: HardwareInterface) {
                 // hwInterfaces.bluetooth.startScan()
             }
 
-            is Message.InformationRequest -> {
-                val deviceId = message.deviceId
-                synchronized(messageLock) {
-                    val device = devices[deviceId]
-                    if (device != null) {
-                        hwInterfaces.usb.requestInformation(deviceId)
-                    }
-                }
-            }
+            else
+                -> {
+                val device = devices[deviceId]
+                if (device != null) {
+                    when (device.connectionType) {
+                        ConnectionType.Usb -> {
+                            hwInterfaces.usb.sendMessage(deviceId!!, message)
+                        }
 
-            is Message.Command -> {
-                val deviceId = message.deviceId
-                synchronized(messageLock) {
-                    val device = devices[deviceId]
-                    if (device != null) {
-                        if (device.connectionType == ConnectionType.Usb) {
-                            hwInterfaces.usb.sendData(
-                                deviceId, DataSend(
-                                    vibration = message.command.vibration,
-                                    vibrationPattern = message.command.vibrationPattern
-                                )
-                            )
+                        ConnectionType.Bluetooth -> {
+                            hwInterfaces.bluetooth.sendMessage(deviceId!!, message)
                         }
                     }
                 }
             }
-
-            else -> throw Exception("Unknown message type: ${message.type}")
         }
     }
 

@@ -32,16 +32,17 @@ function build_windows {
     # get tag from package.json
     $packageJsonContent = Get-Content -Path "frontend/Unity/Packages/com.cynteract.connector/package.json" | ConvertFrom-Json
     $version = $packageJsonContent.version
-    $tag = "v$version"
-
-    Push-Location .\backend\windows
-    dotnet publish -c Release -r win10-x64 --self-contained -o ../../frontend/Unity/Assets/StreamingAssets Connector.csproj
-
-
-
-    Move-Item -Path .\..\..\frontend\Unity\Assets\StreamingAssets\Connector.exe -Destination .\..\..\frontend\Unity\Assets\StreamingAssets\Connector_$tag.exe -Force
-
-    Pop-Location
+    $projectFolder = "./backend/windows/src/Connector"
+    $projectPath = "$projectFolder/Connector.csproj"
+    $outputPath = "./frontend/Unity/Assets/StreamingAssets/Connector_v$version.exe"
+    # Do a clean build to show all warnings. This will slightly increase the build time for the next debug run as well.
+    dotnet clean $projectPath
+    dotnet publish -c Release -r win-x64 --self-contained  $projectPath
+    if ($LASTEXITCODE -ne 0) {
+        Write-Output "dotnet publish failed."
+        exit $LASTEXITCODE
+    }
+    Move-Item -Path "$projectFolder\bin\Release\net8.0-windows10.0.22621.0\win-x64\publish\Connector.exe" -Destination $outputPath -Force
 }
 
 function build_all {
@@ -109,6 +110,27 @@ function upload_release {
     gh release create $tag --generate-notes frontend/Unity/Assets/connector-release_$tag.aar frontend/Unity/Assets/StreamingAssets/Connector_$tag.exe
 }
 
+function copy_files {
+    $projectRoot = (Get-Location).Path
+
+    $syncedFiles = @{
+        "backend/windows/tests/Connector.Tests/TestData/testdata.json" = "backend/android/app/connector/src/test/resources/testdata.json"
+        "backend/windows/src/Connector/Protocol.cs"                    = "frontend/Unity/Packages/com.cynteract.connector/Runtime/Protocol.cs"
+    }
+
+    $syncedFolders = @{
+        "backend/windows/src/Connector/Messages" = "frontend/Unity/Packages/com.cynteract.connector/Runtime/Messages"
+    }
+
+    foreach ($file in $syncedFiles.GetEnumerator()) {
+        Copy-Item -Path (Join-Path $projectRoot $file.Key) -Destination (Join-Path $projectRoot $file.Value) -Force
+    }
+
+    foreach ($folder in $syncedFolders.GetEnumerator()) {
+        Copy-Item -Path (Join-Path $projectRoot "$($folder.Key)/*") -Destination (Join-Path $projectRoot $folder.Value) -Recurse -Force
+    }
+}
+
 switch ($argument) {
     "android" {
         build_android
@@ -122,7 +144,10 @@ switch ($argument) {
     "release" {
         upload_release
     }
+    "copy_files" {
+        copy_files
+    }
     default {
-        Write-Host "Invalid argument. Please use 'android', 'windows', 'all', or 'release'."
+        Write-Host "Invalid argument. Possible commands: [android | windows | all | release | copy_files]."
     }
 }
