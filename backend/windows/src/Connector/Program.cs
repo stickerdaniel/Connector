@@ -16,6 +16,7 @@ namespace Connector
         {
             deviceCache = new DeviceCache(usb, bluetooth);
             deviceCache.OnMessage += (deviceId, message) => Console.Out.WriteLine(Protocol.Serialize(deviceId, message));
+
             usb.Init();
         }
         bool ProcessInput()
@@ -23,7 +24,14 @@ namespace Connector
             string? line = Console.In.ReadLine();
             if (line == null)
                 return true;
+            
             (string deviceId, object message) = Protocol.Deserialize(line);
+            Console.Out.WriteLine(
+                Protocol.Serialize(
+                null,
+                new Debug { message = $"Parsed in backend: {JsonHelper.ToJson(message)}" }
+                )
+                );
             deviceCache.SendMessage(deviceId, message);
             return false;
         }
@@ -47,6 +55,12 @@ namespace Connector
                 }
                 catch (Exception e)
                 {
+                    Console.Out.WriteLine(
+                        Protocol.Serialize(
+                            null,
+                            new Debug { message = $"Error in backend: {e}" }
+                        )
+                    );
                     Console.Error.WriteLine(e);
                     Console.Error.Flush();
                 }
