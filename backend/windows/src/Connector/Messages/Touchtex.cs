@@ -11,11 +11,15 @@ namespace Connector.Messages
     public class Touchtex
     {
         static Touchtex() => Factory.RegisterMessageType("touchtex", typeof(Touchtex));
-
-        public string? vibrationMode;
-        public int mainVibration;
-        public int[]? fingerVibrations;
-        public int[]? armVibrations;
-        public byte heat;
+        public class TouchtexPart
+        {
+            public byte[]? vibrations;
+            public byte heat;
+        }
+        public byte mainVibration;
+        public byte[]? fingerVibrations;
+        public TouchtexPart[]? touchTexBoards;
+        public byte frontPressure;
+        public byte backPressure;
     }
 }

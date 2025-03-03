@@ -24,16 +24,16 @@ public class DevicesTest : MonoBehaviour
             });
             touchtexButton.onClick.AddListener(() =>
             {
-                var touchtexMessage = new Connector.Messages.Touchtex
-                {
-                    vibrationMode = "Rtp", // Set the mode to 1
-                    mainVibration = 100,
-                    fingerVibrations = new int[] { 100, 100, 100, 100, 100 },
-                    armVibrations = new int[] { 100, 100, 100, 100, 100 },
-                    heat = 100
-                };
+                // var touchtexMessage = new Connector.Messages.Touchtex
+                // {
+                //     vibrationMode = "Rtp", // Set the mode to 1
+                //     mainVibration = 100,
+                //     fingerVibrations = new int[] { 100, 100, 100, 100, 100 },
+                //     armVibrations = new int[] { 100, 100, 100, 100, 100 },
+                //     heat = 100
+                // };
 
-                deviceManager.SendMessage(device.Id, touchtexMessage);
+                // deviceManager.SendMessage(device.Id, touchtexMessage);
             });
             Debug.Log("New device " + device.Id);
             device.OnError += (e) => Debug.Log("Error " + device.Id + " " + e);
