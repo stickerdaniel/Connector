@@ -119,12 +119,14 @@ namespace Connector
             {
                 using (MemoryStream stream = new())
                 {
+                    
                     using (BinaryWriter writer = new(stream))
                     {
                         hardwareProtocol.Serialize(writer, message);
+             
+                        serial.Write(stream.GetBuffer(), 0, (int)stream.Length);
+                        serial.Write(PACKAGE_DELIM, 0, PACKAGE_DELIM.Length);
                     }
-                    serial.Write(stream.GetBuffer(), 0, (int)stream.Length);
-                    serial.Write(PACKAGE_DELIM, 0, PACKAGE_DELIM.Length);
                 }
             }
         }

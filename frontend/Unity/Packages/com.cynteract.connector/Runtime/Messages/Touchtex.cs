@@ -1,9 +1,7 @@
 #nullable enable
 
 using System;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
+
 
 namespace Connector.Messages
 {
@@ -11,15 +9,16 @@ namespace Connector.Messages
     public class Touchtex
     {
         static Touchtex() => Factory.RegisterMessageType("touchtex", typeof(Touchtex));
-        public class TouchtexPart
-        {
-            public byte[]? vibrations;
-            public byte heat;
-        }
+
         public byte mainVibration;
         public byte[]? fingerVibrations;
-        public TouchtexPart[]? touchTexBoards;
-        public byte frontPressure;
-        public byte backPressure;
+        public TouchTexPart[]? touchTexBoards;
+        public byte frontPressure, backPressure;
+    }
+    [Serializable]
+    public class TouchTexPart
+    {
+        public byte[]? vibrations;
+        public byte heat;
     }
 }

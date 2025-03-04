@@ -67,7 +67,7 @@ namespace Connector
             if (process == null || process.HasExited)
                 throw new Exception("Backend is not running");
 
-            process.StandardInput.Write(serializedMessage);
+            process.StandardInput.WriteLine(serializedMessage);
         }
         public string? GetConnectorExeFilePath()
         {
