@@ -43,6 +43,7 @@
             "type": "process",
             "command": "powershell",
             "args": [
+                "-File",
                 "${workspaceFolder}/tool.ps1",
                 "windows"
             ],
@@ -56,6 +57,7 @@
             "type": "process",
             "command": "powershell",
             "args": [
+                "-File",
                 "${workspaceFolder}/tool.ps1",
                 "android"
             ],
@@ -65,6 +67,7 @@
             "type": "process",
             "command": "powershell",
             "args": [
+                "-File",
                 "${workspaceFolder}/tool.ps1",
                 "all"
             ],
@@ -74,6 +77,7 @@
             "type": "process",
             "command": "powershell",
             "args": [
+                "-File",
                 "${workspaceFolder}/tool.ps1",
                 "release"
             ],
@@ -83,6 +87,7 @@
             "type": "process",
             "command": "powershell",
             "args": [
+                "-File",
                 "${workspaceFolder}/tool.ps1",
                 "copy_files"
             ],
