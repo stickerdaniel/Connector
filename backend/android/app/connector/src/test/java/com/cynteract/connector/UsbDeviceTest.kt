@@ -57,7 +57,7 @@ class UsbDeviceTest {
     @AfterEach
     fun stopUsbDevice() {
         usbDevice.close()
-        assert(!serialPortMock.isOpen, { "Serial port should be closed" })
+        assert(!serialPortMock.isOpen) { "Serial port should be closed" }
     }
 
     @Test
@@ -68,8 +68,7 @@ class UsbDeviceTest {
     @Test
     fun testReceiveMessage() {
         val (json1, binary1) = getTestEntry()
-        serialPortMock.feed(binary1)
-        serialPortMock.feed("CYNTERACT\n".toByteArray())
+        serialPortMock.feedDelimited(binary1)
         assertReceivedMessage(json1)
         assert(messageQueue.isEmpty())
     }
@@ -78,7 +77,7 @@ class UsbDeviceTest {
     fun testMultiple() {
         val (json1, binary1) = getTestEntry()
         val count = 1000
-        repeat(count) { serialPortMock.feed(binary1 + "CYNTERACT\n".toByteArray()) }
+        repeat(count) { serialPortMock.feedDelimited(binary1) }
         repeat(count) { assertReceivedMessage(json1) }
         assert(messageQueue.isEmpty())
     }
@@ -86,9 +85,33 @@ class UsbDeviceTest {
     @Test
     fun testBrokenMessages() {
         val (json1, binary1) = getTestEntry()
-        repeat(5) { serialPortMock.feed(binary1 + "CYNTERACT\n broken stuff CYNTERACT\n".toByteArray()) }
-        repeat(5) { assertReceivedMessage(json1) }
-        assert(messageQueue.isEmpty())
+
+        // correct message
+        serialPortMock.feedDelimited(binary1)
+        assertReceivedMessage(json1)
+
+        // corrupt message
+        serialPortMock.feedDelimited("broken stuff".toByteArray())
+        assertReceivedError()
+        serialPortMock.feedDelimited(binary1)
+        assertReceivedMessage(json1)
+
+        // buffer overflow
+        serialPortMock.feed(ByteArray(usbDevice.bufferSize() + 10))
+        assertReceivedError()
+        serialPortMock.feedDelimited(byteArrayOf())
+        assertReceivedError()
+        serialPortMock.feedDelimited(binary1)
+        assertReceivedMessage(json1)
+
+        // timeout
+        serialPortMock.feed(ByteArray(10))
+        Thread.sleep(usbDevice.packageTimeout() + 10)
+        serialPortMock.feedDelimited(binary1)
+        assertReceivedError()
+        assertReceivedMessage(json1)
+
+        assertEquals(0, messageQueue.size)
     }
 
     private fun assertReceivedMessage(expected: String) {
@@ -97,6 +120,15 @@ class UsbDeviceTest {
         assertEquals("COM1", nameAndMessage.first)
         val json = Protocol.serialize("testDevice", nameAndMessage.second)
         TestData.assertJsonEquals(expected, json)
+    }
+
+    private fun assertReceivedError() {
+        val nameAndMessage = errorQueue.poll(500, TimeUnit.MILLISECONDS)
+            ?: fail("No error received.")
+        assert(errorQueue.isEmpty()) {
+            val nameAndMessage2 = errorQueue.poll()!!
+            fail("More than one error received. First error: ${nameAndMessage.second}, Second error: ${nameAndMessage2.second}")
+        }
     }
 
     private fun getTestEntry(): Pair<String, ByteArray> {
@@ -112,6 +144,10 @@ class UsbDeviceTest {
         private var isOpen = false
         fun feed(data: ByteArray) {
             data.forEach { dataStream.put(it) }
+        }
+
+        fun feedDelimited(data: ByteArray) {
+            feed(data + UsbDevice.PACKAGE_DELIM)
         }
 
         override fun open(connection: UsbDeviceConnection?) {

@@ -27,7 +27,10 @@ class UsbDevice(
     }
 
     private val readBuffer = PackageReadBuffer()
-    private val PACKAGE_DELIM = "CYNTERACT\n".toByteArray()
+
+    companion object {
+        val PACKAGE_DELIM = "CYNTERACT\n".toByteArray()
+    }
 
     private val hardwareProtocol = HardwareProtocol()
 
@@ -38,8 +41,15 @@ class UsbDevice(
     var onRequestConnectionCheck: ((String) -> Unit)? = null
     var onDeviceConnected: ((String) -> Unit)? = null
     var onDeviceError: ((String, String) -> Unit)? = null
-    var onDeviceMessage: ((String, Any) -> Unit)? =
-        null
+    var onDeviceMessage: ((String, Any) -> Unit)? = null
+
+    fun bufferSize(): Int {
+        return readBuffer.data.size
+    }
+
+    fun packageTimeout(): Long {
+        return 2000
+    }
 
     fun start() {
         Log.d(deviceName, "Starting device")
@@ -100,8 +110,8 @@ class UsbDevice(
             var x = buffer[i]
 
             // case 1: last package timed out
-            if (readBuffer.transmissionStartTime > 0 && System.currentTimeMillis() > readBuffer.transmissionStartTime + 2000) {
-                System.err.println("package timed out")
+            if (readBuffer.transmissionStartTime > 0 && System.currentTimeMillis() > readBuffer.transmissionStartTime + packageTimeout()) {
+                onDeviceError?.invoke(deviceName, "Package timeout.")
                 // assume the start of a new package
                 readBuffer.transmissionStartTime = 0
             }
@@ -112,7 +122,7 @@ class UsbDevice(
             }
             // case 3: readBuffer overflow, this package will be corrupted
             if (readBuffer.offset == readBuffer.data.size) {
-                System.err.println("readBuffer overflow")
+                onDeviceError?.invoke(deviceName, "ReadBuffer overflow.")
                 // continue reading the package until the end, even if it is corrupted
                 readBuffer.offset = 0
             }

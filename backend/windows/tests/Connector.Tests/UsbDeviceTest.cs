@@ -50,8 +50,7 @@ public class UsbDeviceTest
     public void TestReceiveMessage()
     {
         var (json1, binary1) = GetTestEntry();
-        serialPortMock.feed(binary1);
-        serialPortMock.feed(Encoding.UTF8.GetBytes("CYNTERACT\n"));
+        serialPortMock.FeedDelimited(binary1);
         AssertReceivedMessage(json1);
         Assert.That(messageQueue.Count, Is.EqualTo(0));
     }
@@ -63,8 +62,7 @@ public class UsbDeviceTest
         int count = 1000;
         for (int i = 0; i < count; i++)
         {
-            serialPortMock.feed(binary1);
-            serialPortMock.feed(Encoding.UTF8.GetBytes("CYNTERACT\n"));
+            serialPortMock.FeedDelimited(binary1);
         }
         for (int i = 0; i < count; i++)
         {
@@ -77,15 +75,32 @@ public class UsbDeviceTest
     public void TestBrokenMessages()
     {
         var (json1, binary1) = GetTestEntry();
-        for (int i = 0; i < 5; i++)
-        {
-            serialPortMock.feed(binary1);
-            serialPortMock.feed(Encoding.UTF8.GetBytes("CYNTERACT\n broken stuff CYNTERACT\n"));
-        }
-        for (int i = 0; i < 5; i++)
-        {
-            AssertReceivedMessage(json1);
-        }
+
+        // correct message
+        serialPortMock.FeedDelimited(binary1);
+        AssertReceivedMessage(json1);
+
+        // corrupt message
+        serialPortMock.FeedDelimited(Encoding.UTF8.GetBytes("broken stuff"));
+        AssertReceivedError();
+        serialPortMock.FeedDelimited(binary1);
+        AssertReceivedMessage(json1);
+
+        // buffer overflow
+        serialPortMock.Feed(new byte[usbDevice.BufferSize + 10]);
+        AssertReceivedError();
+        serialPortMock.FeedDelimited([]);
+        AssertReceivedError();
+        serialPortMock.FeedDelimited(binary1);
+        AssertReceivedMessage(json1);
+
+        // timeout
+        serialPortMock.Feed(new byte[10]);
+        Thread.Sleep(usbDevice.PackageTimeout + 10);
+        serialPortMock.FeedDelimited(binary1);
+        AssertReceivedError();
+        AssertReceivedMessage(json1);
+
         Assert.That(messageQueue.Count, Is.EqualTo(0));
     }
 
@@ -96,6 +111,13 @@ public class UsbDeviceTest
         Assert.That(nameAndMessage!.Item1, Is.EqualTo("COM1"));
         string json = Protocol.Serialize("testDevice", nameAndMessage!.Item2);
         TestData.AssertJsonEquals(expected, json);
+    }
+    private void AssertReceivedError()
+    {
+        if (!errorQueue.TryTake(out Tuple<string, string>? nameAndMessage, 500))
+            Assert.Fail("No error received.");
+        if (errorQueue.TryTake(out Tuple<string, string>? nameAndMessage2))
+            Assert.Fail($"More than one error received.\n\nFirst error: {nameAndMessage!.Item2}\n\nSecond error: {nameAndMessage2.Item2}");
     }
 
     private (string, byte[]) GetTestEntry()
@@ -125,6 +147,7 @@ public class UsbDeviceTest
         }
         public void DiscardInBuffer() { }
         public void DiscardOutBuffer() { }
-        public void feed(byte[] data) => Array.ForEach(data, b => dataStream.Add(b));
+        public void Feed(byte[] data) => Array.ForEach(data, b => dataStream.Add(b));
+        public void FeedDelimited(byte[] data) => Feed(data.Concat(UsbDevice.PACKAGE_DELIM).ToArray());
     }
 }

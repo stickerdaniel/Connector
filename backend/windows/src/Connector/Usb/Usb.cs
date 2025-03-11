@@ -74,9 +74,7 @@ namespace Connector
                 }
                 catch (Exception ex)
                 {
-
-                    OnDeviceError?.Invoke(this, "", ex.Message);
-
+                    OnDeviceError?.Invoke(this, null, ex.Message);
                 }
             }
         }

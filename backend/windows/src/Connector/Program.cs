@@ -24,7 +24,7 @@ namespace Connector
             string? line = Console.In.ReadLine();
             if (line == null)
                 return true;
-            
+
             (string deviceId, object message) = Protocol.Deserialize(line);
             Console.Out.WriteLine(
                 Protocol.Serialize(
@@ -58,11 +58,9 @@ namespace Connector
                     Console.Out.WriteLine(
                         Protocol.Serialize(
                             null,
-                            new Debug { message = $"Error in backend: {e}" }
+                            new Error { message = e.Message }
                         )
                     );
-                    Console.Error.WriteLine(e);
-                    Console.Error.Flush();
                 }
             }
             return 0;

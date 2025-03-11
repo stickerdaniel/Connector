@@ -26,7 +26,7 @@ namespace Connector
             public int offset = 0;
         }
         private ReadBuffer readBuffer = new();
-        private static readonly byte[] PACKAGE_DELIM = { (byte)'C', (byte)'Y', (byte)'N', (byte)'T', (byte)'E', (byte)'R', (byte)'A', (byte)'C', (byte)'T', (byte)'\n' };
+        public static readonly byte[] PACKAGE_DELIM = Encoding.UTF8.GetBytes("CYNTERACT\n");
         private HardwareProtocol hardwareProtocol = new();
 
         public event Action<string> OnRequestConnectionCheck;
@@ -44,6 +44,16 @@ namespace Connector
             PortName = portName;
             serial = serialPort;
         }
+
+        public int BufferSize
+        {
+            get { return readBuffer.data.Length; }
+        }
+        public int PackageTimeout
+        {
+            get { return 2000; }
+        }
+
         public void Start()
         {
             serial.Open();
@@ -80,9 +90,9 @@ namespace Connector
             while ((x = serial.ReadByte()) != -1 && !cancellationToken.IsCancellationRequested)
             {
                 // case 1: last package timed out
-                if (readBuffer.transmissionStartTime > 0 && DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond > readBuffer.transmissionStartTime + 2000)
+                if (readBuffer.transmissionStartTime > 0 && DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond > readBuffer.transmissionStartTime + PackageTimeout)
                 {
-                    Console.Error.WriteLine("package timed out");
+                    OnDeviceError?.Invoke(PortName, "Package timeout.");
                     // assume the start of a new package
                     readBuffer.transmissionStartTime = 0;
                 }
@@ -95,7 +105,7 @@ namespace Connector
                 // case 3: buffer overflow, this package will be corrupted
                 if (readBuffer.offset == readBuffer.data.Length)
                 {
-                    Console.Error.WriteLine("buffer overflow");
+                    OnDeviceError?.Invoke(PortName, "ReadBuffer overflow.");
                     // continue reading the package until the end, event if it is corrupted
                     readBuffer.offset = 0;
                 }
@@ -119,11 +129,11 @@ namespace Connector
             {
                 using (MemoryStream stream = new())
                 {
-                    
+
                     using (BinaryWriter writer = new(stream))
                     {
                         hardwareProtocol.Serialize(writer, message);
-             
+
                         serial.Write(stream.GetBuffer(), 0, (int)stream.Length);
                         serial.Write(PACKAGE_DELIM, 0, PACKAGE_DELIM.Length);
                     }
