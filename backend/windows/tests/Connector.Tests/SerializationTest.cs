@@ -1,4 +1,3 @@
-using System.Text.Json;
 
 namespace Connector.Tests;
 public class SerializationTest

@@ -11,6 +11,7 @@ namespace Connector.Messages
     {
         static Dataframe() => Factory.RegisterMessageType("dataframe", typeof(Dataframe));
 
+        [Serializable]
         public class IMUData
         {
             public float x, y, z, w;

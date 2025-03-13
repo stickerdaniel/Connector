@@ -2,9 +2,11 @@
 
 Library that connects to the hardware via USB or BLE.
 
+Open Unity's package manager and select "Add package from git URL...". Enter `https://github.com/Cynteract/Connector.git?path=/frontend/Unity/Packages/com.cynteract.connector#main`. For a specific version, enter instead: `https://github.com/Cynteract/Connector.git?path=/frontend/Unity/Packages/com.cynteract.connector#v1.0.0` .
+
 ## Prerequisites
 
-Run following command in the terminal:
+Install all applications. For Windows, run in a terminal:
 
 ```powershell
 winget install Microsoft.VisualStudioCode Unity.UnityHub Git.Git GitHub.cli Microsoft.DotNet.SDK.8 Google.AndroidStudio
@@ -20,11 +22,13 @@ Open vscode, go to extensions, select the filter "Recommended", click on "Instal
 
 ## Unity Frontend
 
-Open UPM and select "Add package from git URL...". Use the url `https://github.com/Cynteract/Connector.git?path=/frontend/Unity/Packages/com.cynteract.connector#main` . If you want to use a specific version, you specify it like this: `https://github.com/Cynteract/Connector.git?path=/frontend/Unity/Packages/com.cynteract.connector#v1.0.0` .
+Open the Unity project `frontend/Unity` and start the sample scene. The console will log all output from the backend.
 
-If you want to develop on this repository, clone it from `https://github.com/Cynteract/Connector.git`. To run the included sample, open the Unity project `frontend/Unity` and run it. It will log all input from the backend. You can also build the android apk to check it on your android phone. You can also import the Connector package into another Unity project via UPM -> "Add package from disc..." -> select `frontend\Unity\Packages\com.cynteract.connector\package.json`. This will create a link and you can develop it while working on another Unity project.
+In the Unity Editor select "Window -> General -> Test Runner". Select "EditMode" and click on "Run All". Each unity test must pass.
 
-To debug the Unity scene on Android:
+For debugging the connector package in an external Unity project, open the external project in the Unity Editor. Open Unity package manager, select "Add package from disc...", select `frontend\Unity\Packages\com.cynteract.connector\package.json`. This will create a link to the connector folder. Any change you make in the connector will be reflected in the external project.
+
+For debugging the Unity scene on Android:
 
 1. Open Windows Search and type "Environment variables". Select "Settings environmental variables"
 2. Select "path" and click on "Edit".

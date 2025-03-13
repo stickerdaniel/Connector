@@ -3,10 +3,11 @@ using System.Text.Json;
 public class TestData
 {
     public static List<Dictionary<string, string>> Data { get; private set; }
+    const string TestDataPath = "TestData/testdata.json";
     static TestData()
     {
         Data = new List<Dictionary<string, string>>();
-        string json = File.ReadAllText("TestData/testdata.json");
+        string json = File.ReadAllText(TestDataPath);
         JsonDocument doc = JsonDocument.Parse(json);
         foreach (JsonElement element in doc.RootElement.EnumerateArray())
         {
