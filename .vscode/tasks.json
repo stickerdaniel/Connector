@@ -63,6 +63,16 @@
             ],
         },
         {
+            "label": "Android Test",
+            "type": "process",
+            "command": "powershell",
+            "args": [
+                "-File",
+                "${workspaceFolder}/tool.ps1",
+                "android_test"
+            ],
+        },
+        {
             "label": "Build All",
             "type": "process",
             "command": "powershell",

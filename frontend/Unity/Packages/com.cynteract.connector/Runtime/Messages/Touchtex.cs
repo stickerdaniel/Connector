@@ -13,7 +13,7 @@ namespace Connector.Messages
         public byte mainVibration;
         public byte[]? fingerVibrations;
         public TouchTexPart[]? touchTexBoards;
-        public byte frontPressure, backPressure;
+        public byte frontPressure, backPressure, handPressure;
     }
     [Serializable]
     public class TouchTexPart

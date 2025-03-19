@@ -14,5 +14,6 @@ class Touchtex @OptIn(ExperimentalUnsignedTypes::class) constructor(
     var fingerVibrations: UByteArray,
     var touchTexBoards: Array<TouchtexPart>,
     var frontPressure: Byte,
-    var backPressure: Byte
+    var backPressure: Byte,
+    var handPressure: Byte
 )
