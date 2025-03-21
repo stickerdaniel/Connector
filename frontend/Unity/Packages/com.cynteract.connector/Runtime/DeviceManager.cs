@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
+using Connector.Messages;
 
 namespace Connector
 {
@@ -17,7 +18,6 @@ namespace Connector
 
         public Dictionary<string, Device> Devices { get; private set; } = new();
 
-        private string jsonPath;
 
         public event Action<Device>? OnDeviceConnected;
         public event Action<Device>? OnDeviceDisconnected;
@@ -26,8 +26,6 @@ namespace Connector
         public void Start()
         {
             Devices = new();
-            jsonPath = Path.Combine(Application.persistentDataPath, "StandardDeviceInformation.json");
-
             platformSpecific.Start(this);
         }
 
@@ -41,11 +39,12 @@ namespace Connector
             OnError?.Invoke(e);
         }
 
-        void SendMessage(Message message)
+        public void SendMessage(string? deviceId, object message)
         {
             try
             {
-                platformSpecific.SendMessage(message);
+                string serializedMessage = Protocol.Serialize(deviceId, message);
+                platformSpecific.SendMessage(serializedMessage);
             }
             catch (Exception e)
             {
@@ -58,13 +57,13 @@ namespace Connector
             try
             {
                 // deserialize twice as described in https://docs.unity3d.com/2020.1/Documentation/Manual/JSONSerialization.html
-                Message message = Message.FromJson(messageString);
-
+                (string deviceId, object message) = Protocol.Deserialize(messageString);
+                Device? device;
 
                 switch (message)
                 {
-                    case Message.Connect connectMessage:
-                        if (!Devices.ContainsKey(connectMessage.deviceId))
+                    case Connect connectMessage:
+                        if (!Devices.ContainsKey(deviceId))
                         {
                             var connectionType = connectMessage.connectionType switch
                             {
@@ -73,82 +72,51 @@ namespace Connector
                                 _ => throw new Exception($"Unknown connection type: {connectMessage.connectionType}")
                             };
                             var newDevice = new Device(
-                                connectMessage.deviceId,
-                                null,
-                                DeviceType.Unknown,
+                                                               deviceId,
                                 connectionType
                                 );
 
-                            Devices.Add(connectMessage.deviceId, newDevice);
-                            OnDeviceConnected?.Invoke(Devices[connectMessage.deviceId]);
-                            var standardInfo = LoadStandardDeviceInformation();
-                            if (standardInfo != null)
-                            {
-                                Devices[connectMessage.deviceId].RaiseInformation(standardInfo);
-                            }
-                            
+                            Devices.Add(deviceId, newDevice);
+                            OnDeviceConnected?.Invoke(Devices[deviceId]);
                         }
                         return;
-                    case Message.Disconnect disconnectMessage:
-                        if (!Devices.ContainsKey(disconnectMessage.deviceId))
+                    case Disconnect disconnectMessage:
+                        if (!Devices.ContainsKey(deviceId))
                         {
-                            Debug.LogError("Received disconnect for an unknown device: " + disconnectMessage.deviceId);
+                            Debug.LogError("Received disconnect for an unknown device: " + deviceId);
                             return;
                         }
-                        var device = Devices[disconnectMessage.deviceId];
+                        device = Devices[deviceId];
                         OnDeviceDisconnected?.Invoke(device);
-                        Devices.Remove(disconnectMessage.deviceId);
+                        Devices.Remove(deviceId);
                         return;
-                    case Message.InformationMessage infoMessage:
-                        if (!Devices.ContainsKey(infoMessage.deviceId))
-                        {
-                            Debug.LogError("Received information for an unknown device: " + infoMessage.deviceId);
-                            return;
-                        }
-                        SaveStandardDeviceInformation(infoMessage.information);
-                        Devices[infoMessage.deviceId].RaiseInformation(infoMessage.information);
-                        return;
-                    case Message.Data dataMessage:
-                        if (!Devices.ContainsKey(dataMessage.deviceId))
-                        {
-                            Debug.LogError("Received data for an unknown device: " + dataMessage.deviceId);
-                            return;
-                        }
-                        if (Devices[dataMessage.deviceId].Information == null)
-                        {
-                            Debug.Log("Data arrived, requesting Information");
-                            RequestInformation(dataMessage.deviceId);
-                        }
-                        Devices[dataMessage.deviceId].RaiseData(dataMessage.data);
-                        return;
-                    case Message.Debug debugMessage:
-                            Debug.Log("Debug: " + debugMessage.message);
-                            PrintMessage(debugMessage);
-                        return;
-                    case Message.Error errorMessage:
-                        if (!Devices.ContainsKey(errorMessage.deviceId))
-                        {
 
-                            Debug.LogError($"Received error for an unknown device ({errorMessage.deviceId}): ${errorMessage.message}");
-                            return;
-                        }
+                    case Messages.Debug debugMessage:
+                        Debug.Log("Debug: " + debugMessage.message);
+                        PrintMessage(debugMessage);
+                        return;
+
+                    case Error errorMessage:
+                        device = Devices[deviceId];
                         Exception e = new Exception(errorMessage.message);
-                        var errorDevice = Devices[errorMessage.deviceId];
-                        errorDevice.RaiseError(e);
+                        device.RaiseError(e);
                         return;
 
                     default:
-                        Debug.LogError("Unknown message id: " + message.type);
+                        device = Devices[deviceId];
+                        device.RaiseMessage(message);
                         return;
                 }
             }
             catch (Exception e)
             {
-                OnError?.Invoke(e);
+                var errorMessage = $"Error processing message: [{(messageString.Length > 20 ? messageString.Substring(0, 20) + "..." : messageString)}]";
+                OnError?.Invoke(new Exception(errorMessage, e));
             }
         }
 
-        private void PrintMessage(Message.Debug debugMessage)
+        /// <summary> Print debug message. Multiple messages with the same text within a short time period are collapse into print. </summary>
+        private void PrintMessage(Messages.Debug debugMessage)
         {
             int seconds = 5;
             string messagetext = debugMessage.message;
@@ -181,34 +149,11 @@ namespace Connector
             }
         }
 
-        public Device? GetDevice(DeviceType type)
-        {
-            return Devices.Values.First(device => device.DeviceType == type);
-        }
-
         public void TriggerScan()
         {
-            Message message = new Message.Scan { connectionType = "usb" };
-            SendMessage(message);
+            object message = new Scan { connectionType = "usb" };
+            SendMessage(null, message);
         }
-        public void RequestInformation(string deviceId)
-        {
-            Message message = new Message.InformationRequest() { deviceId = deviceId };
-            SendMessage(message);
-        }
-        public void SaveStandardDeviceInformation(Information information)
-        {
-            var informationJson=JsonHelper.ToJson(information);
-            File.WriteAllText(jsonPath, informationJson);
-        }
-        public Information? LoadStandardDeviceInformation()
-        {
-            if (!File.Exists(jsonPath))
-            {
-                return null;
-            }
-            var informationJson=File.ReadAllText(jsonPath);
-            return JsonHelper.FromJson<Information>(informationJson);
-        }
+
     }
 }

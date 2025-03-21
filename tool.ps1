@@ -2,14 +2,7 @@ param (
     [string]$argument
 )
 
-
-function build_android {
-    Write-Output "Building Android connector..."
-    # get tag from package.json
-    $packageJsonContent = Get-Content -Path "frontend/Unity/Packages/com.cynteract.connector/package.json" | ConvertFrom-Json
-    $version = $packageJsonContent.version
-    $tag = "v$version"
-    Push-Location .\backend\android
+function set_android_env {
     # use Unity Android SDK if not specified
     if (-not $env:JAVE_HOME) {
         $env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
@@ -21,33 +14,52 @@ function build_android {
     if (-not $env:ANDROID_HOME) {
         $env:ANDROID_HOME = "C:\Program Files\Unity\Hub\Editor\2022.3.16f1\Editor\Data\PlaybackEngines\AndroidPlayer\SDK"
     }
+}
+
+function android_test {
+    Write-Output "Testing Android connector..."
+    Push-Location .\backend\android
+    set_android_env
+    .\gradlew :app:connector:test
+    Pop-Location
+}
+
+function android_build {
+    Write-Output "Building Android connector..."
+    # get tag from package.json
+    $packageJsonContent = Get-Content -Path "frontend/Unity/Packages/com.cynteract.connector/package.json" | ConvertFrom-Json
+    $version = $packageJsonContent.version
+    $tag = "v$version"
+    Push-Location .\backend\android
+    set_android_env
     .\gradlew :app:connector:assembleRelease
     Write-Output "Copying Android connector to Unity project..."
     Copy-Item -Path .\app\connector\build\outputs\aar\connector-release.aar -Destination .\..\..\frontend\Unity\Assets\connector-release_$tag.aar -Force
     Pop-Location
 }
 
-function build_windows {
+function windows_build {
     Write-Output "Building Windows connector..."
     # get tag from package.json
     $packageJsonContent = Get-Content -Path "frontend/Unity/Packages/com.cynteract.connector/package.json" | ConvertFrom-Json
     $version = $packageJsonContent.version
-    $tag = "v$version"
-
-    Push-Location .\backend\windows
-    dotnet publish -c Release -r win10-x64 --self-contained -o ../../frontend/Unity/Assets/StreamingAssets Connector.csproj
-
-
-
-    Move-Item -Path .\..\..\frontend\Unity\Assets\StreamingAssets\Connector.exe -Destination .\..\..\frontend\Unity\Assets\StreamingAssets\Connector_$tag.exe -Force
-
-    Pop-Location
+    $projectFolder = "./backend/windows/src/Connector"
+    $projectPath = "$projectFolder/Connector.csproj"
+    $outputPath = "./frontend/Unity/Assets/StreamingAssets/Connector_v$version.exe"
+    # Do a clean build to show all warnings. This will slightly increase the build time for the next debug run as well.
+    dotnet clean $projectPath
+    dotnet publish -c Release -r win-x64 --self-contained  $projectPath
+    if ($LASTEXITCODE -ne 0) {
+        Write-Output "dotnet publish failed."
+        exit $LASTEXITCODE
+    }
+    Move-Item -Path "$projectFolder\bin\Release\net8.0-windows10.0.22621.0\win-x64\publish\Connector.exe" -Destination $outputPath -Force
 }
 
 function build_all {
-    build_android
+    android_build
     Write-Output ""
-    build_windows
+    windows_build
 }
 
 function upload_release {
@@ -109,12 +121,36 @@ function upload_release {
     gh release create $tag --generate-notes frontend/Unity/Assets/connector-release_$tag.aar frontend/Unity/Assets/StreamingAssets/Connector_$tag.exe
 }
 
+function copy_files {
+    $projectRoot = (Get-Location).Path
+
+    $syncedFiles = @{
+        "backend/windows/tests/Connector.Tests/TestData/testdata.json" = "backend/android/app/connector/src/test/resources/testdata.json"
+        "backend/windows/src/Connector/Protocol.cs"                    = "frontend/Unity/Packages/com.cynteract.connector/Runtime/Protocol.cs"
+    }
+
+    $syncedFolders = @{
+        "backend/windows/src/Connector/Messages" = "frontend/Unity/Packages/com.cynteract.connector/Runtime/Messages"
+    }
+
+    foreach ($file in $syncedFiles.GetEnumerator()) {
+        Copy-Item -Path (Join-Path $projectRoot $file.Key) -Destination (Join-Path $projectRoot $file.Value) -Force
+    }
+
+    foreach ($folder in $syncedFolders.GetEnumerator()) {
+        Copy-Item -Path (Join-Path $projectRoot "$($folder.Key)/*") -Destination (Join-Path $projectRoot $folder.Value) -Recurse -Force
+    }
+}
+
 switch ($argument) {
     "android" {
-        build_android
+        android_build
+    }
+    "android_test" {
+        android_test
     }
     "windows" {
-        build_windows
+        windows_build
     }
     "all" {
         build_all
@@ -122,7 +158,10 @@ switch ($argument) {
     "release" {
         upload_release
     }
+    "copy_files" {
+        copy_files
+    }
     default {
-        Write-Host "Invalid argument. Please use 'android', 'windows', 'all', or 'release'."
+        Write-Host "Invalid argument. Possible commands: [android | windows | all | release | copy_files]."
     }
 }

@@ -15,8 +15,8 @@ class MainActivity : Activity() {
     private lateinit var txtTerminal: TextView
     private lateinit var edtMessage: EditText
     private var plugin = Main(object : MessageListener {
-        override fun onMessage(command: String) {
-            Log.d("Main", "onMessage: $command")
+        override fun onMessage(message: String) {
+            Log.d("Main", "onMessage: $message")
         }
     })
 

@@ -1,0 +1,106 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Windows Build",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/backend/windows/src/Connector"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Windows Test",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "test",
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/backend/windows/tests/Connector.Tests"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Windows Watch Run",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "watch",
+                "run",
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/backend/windows/src/Connector"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Windows Publish",
+            "type": "process",
+            "command": "powershell",
+            "args": [
+                "-File",
+                "${workspaceFolder}/tool.ps1",
+                "windows"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Android Build",
+            "type": "process",
+            "command": "powershell",
+            "args": [
+                "-File",
+                "${workspaceFolder}/tool.ps1",
+                "android"
+            ],
+        },
+        {
+            "label": "Android Test",
+            "type": "process",
+            "command": "powershell",
+            "args": [
+                "-File",
+                "${workspaceFolder}/tool.ps1",
+                "android_test"
+            ],
+        },
+        {
+            "label": "Build All",
+            "type": "process",
+            "command": "powershell",
+            "args": [
+                "-File",
+                "${workspaceFolder}/tool.ps1",
+                "all"
+            ],
+        },
+        {
+            "label": "Release",
+            "type": "process",
+            "command": "powershell",
+            "args": [
+                "-File",
+                "${workspaceFolder}/tool.ps1",
+                "release"
+            ],
+        },
+        {
+            "label": "Copy Files",
+            "type": "process",
+            "command": "powershell",
+            "args": [
+                "-File",
+                "${workspaceFolder}/tool.ps1",
+                "copy_files"
+            ],
+        }
+    ]
+}

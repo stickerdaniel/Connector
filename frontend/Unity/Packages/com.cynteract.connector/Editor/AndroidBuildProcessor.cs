@@ -76,7 +76,8 @@ namespace Connector
     implementation(""androidx.core:core-ktx:1.10.1"")
     implementation(""androidx.appcompat:appcompat:1.0.2"")
     implementation(""com.github.mik3y:usb-serial-for-android:3.7.0"")
-    implementation(""org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0"")";
+    implementation(""org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0"")
+    implementation(""org.jetbrains.kotlin:kotlin-reflect:1.9.22"")";
             bool hasConnectorDependency = lines.Any(text => text.Contains("com.github.mik3y:usb-serial-for-android"));
             if (!hasConnectorDependency)
             {
