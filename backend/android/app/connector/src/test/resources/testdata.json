@@ -1,0 +1,206 @@
+[
+    {
+        "name": "connect",
+        "protocol": {
+            "deviceId": "testDevice",
+            "type": "connect",
+            "connectionType": "usb"
+        },
+        "hardwareProtocol": "32 2E 30 2E 30 00 63 6F 6E 6E 65 63 74 00 75 73 62 00"
+    },
+    {
+        "name": "command",
+        "protocol": {
+            "deviceId": "testDevice",
+            "type": "command",
+            "vibrationValues": [ 1, 2, 3 ],
+            "vibrationPatterns": [ 4, 5, 6 ]
+        },
+        "hardwareProtocol": "32 2E 30 2E 30 00 63 6F 6D 6D 61 6E 64 00 03 01 02 03 03 04 05 06"
+    },
+    {
+        "name": "dataframe",
+        "protocol": {
+            "deviceId": "testDevice",
+            "type": "dataframe",
+            "forceValues": [ 1, 2, 3 ],
+            "imuValues": [
+                { "x": 4.1, "y": 5.1, "z": 6.1, "w": 7.1 },
+                { "x": 8.1, "y": 9.1, "z": 10.1, "w": 11.1 }
+            ],
+            "imuStates": [ 12, 13, 14 ],
+            "vibrationStates": [ 15, 16, 17 ]
+        },
+        "hardwareProtocol": "32 2E 30 2E 30 00 64 61 74 61 66 72 61 6D 65 00 03 00 01 00 02 00 03 02 40 83 33 33 40 A3 33 33 40 C3 33 33 40 E3 33 33 41 01 99 9A 41 11 99 9A 41 21 99 9A 41 31 99 9A 03 0C 0D 0E 03 0F 10 11"
+    },
+    {
+        "name": "information",
+        "protocol": {
+            "deviceId": "testDevice",
+            "type": "information",
+            "deviceType": "rightGlove",
+            "firmwareVersion": "1.0.0",
+            "firmwareDate": "2023-10-01",
+            "checkpoint": "initial",
+            "vibrationPositions": [ "vib1", "vib2", "vib3" ],
+            "imuPositions": [ "imu1", "imu2", "imu3" ]
+        },
+        "hardwareProtocol": "32 2E 30 2E 30 00 69 6E 66 6F 72 6D 61 74 69 6F 6E 00 72 69 67 68 74 47 6C 6F 76 65 00 31 2E 30 2E 30 00 32 30 32 33 2D 31 30 2D 30 31 00 69 6E 69 74 69 61 6C 00 03 76 69 62 31 00 76 69 62 32 00 76 69 62 33 00 03 69 6D 75 31 00 69 6D 75 32 00 69 6D 75 33 00"
+    },
+    {
+        "name": "debug",
+        "protocol": {
+            "deviceId": "testDevice",
+            "type": "debug",
+            "message": "This is a debug message"
+        },
+        "hardwareProtocol": "32 2E 30 2E 30 00 64 65 62 75 67 00 54 68 69 73 20 69 73 20 61 20 64 65 62 75 67 20 6D 65 73 73 61 67 65 00"
+    },
+    {
+        "name": "disconnect",
+        "protocol": {
+            "deviceId": "testDevice",
+            "type": "disconnect"
+        },
+        "hardwareProtocol": "32 2E 30 2E 30 00 64 69 73 63 6F 6E 6E 65 63 74 00"
+    },
+    {
+        "name": "error",
+        "protocol": {
+            "deviceId": "testDevice",
+            "type": "error",
+            "message": "An error has occurred"
+        },
+        "hardwareProtocol": "32 2E 30 2E 30 00 65 72 72 6F 72 00 41 6E 20 65 72 72 6F 72 20 68 61 73 20 6F 63 63 75 72 72 65 64 00"
+    },
+    {
+        "name": "informationRequest",
+        "protocol": {
+            "deviceId": "testDevice",
+            "type": "informationRequest"
+        },
+        "hardwareProtocol": "32 2E 30 2E 30 00 69 6E 66 6F 72 6D 61 74 69 6F 6E 52 65 71 75 65 73 74 00"
+    },
+    {
+        "name": "scan",
+        "protocol": {
+            "deviceId": "testDevice",
+            "type": "scan",
+            "connectionType": "usb"
+        },
+        "hardwareProtocol": "32 2E 30 2E 30 00 73 63 61 6E 00 75 73 62 00"
+    },
+    {
+        "name": "touchtex",
+        "protocol": {
+            "deviceId": "testDevice",
+            "type": "touchtex",
+            "mainVibration": 1,
+            "fingerVibrations": [ 2, 3, 4, 5, 6 ],
+            "touchTexBoards": [
+                { "vibrations": [ 7, 8, 9 ], "heat": 10 },
+                { "vibrations": [ 11, 12, 13 ], "heat": 14 }
+            ],
+            "frontPressure": 15,
+            "backPressure": 16,
+            "handPressure": 17
+        },
+        "hardwareProtocol": "32 2E 30 2E 30 00 74 6F 75 63 68 74 65 78 00 01 05 02 03 04 05 06 02 03 07 08 09 0A 03 0B 0C 0D 0E 0F 10 11"
+    },
+    {
+        "name": "commandV1",
+        "compatibility": "1.0.0",
+        "direction": "toDevice",
+        "protocol": {
+            "deviceId": "testDevice",
+            "type": "command",
+            "vibrationValues": [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
+            "vibrationPatterns": [ 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 ]
+        },
+        "hardwareProtocol": "44 41 54 41 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F 10 11 12 13 14 00"
+    },
+    {
+        "name": "informationV1",
+        "compatibility": "1.0.0",
+        "direction": "fromDevice",
+        "hardwareProtocol": "7B 22 48 61 6E 64 22 3A 22 52 65 63 68 74 73 22 2C 22 56 69 62 72 61 74 69 6F 6E 22 3A 7B 22 30 22 3A 22 76 69 62 31 22 2C 22 31 22 3A 22 76 69 62 32 22 2C 22 32 22 3A 22 76 69 62 33 22 7D 2C 22 49 4D 55 22 3A 7B 22 30 22 3A 22 69 6D 75 31 22 2C 22 31 22 3A 22 69 6D 75 32 22 2C 22 32 22 3A 22 69 6D 75 33 22 7D 7D",
+        "protocol": {
+            "deviceId": "testDevice",
+            "type": "information",
+            "deviceType": "rightGlove",
+            "firmwareVersion": "not implemented",
+            "firmwareDate": "not implemented",
+            "checkpoint": "not implemented",
+            "vibrationPositions": [ "vib1", "vib2", "vib3" ],
+            "imuPositions": [ "imu1", "imu2", "imu3" ]
+        }
+    },
+    {
+        "name": "informationRequestV1",
+        "compatibility": "1.0.0",
+        "direction": "toDevice",
+        "protocol": {
+            "deviceId": "testDevice",
+            "type": "informationRequest"
+        },
+        "hardwareProtocol": "44 41 54 41 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01"
+    },
+    {
+        "name": "debugV1",
+        "compatibility": "1.0.0",
+        "direction": "fromDevice",
+        "hardwareProtocol": "44 45 42 55 47 54 68 69 73 20 69 73 20 61 20 64 65 62 75 67 20 6D 65 73 73 61 67 65",
+        "protocol": {
+            "deviceId": "testDevice",
+            "type": "debug",
+            "message": "This is a debug message"
+        }
+    },
+    {
+        "name": "dataframeV1",
+        "compatibility": "1.0.0",
+        "direction": "fromDevice",
+        "hardwareProtocol": "44 41 54 41 01 00 02 00 03 00 04 00 05 00 06 00 07 00 08 00 CD CC 8C 3F 9A 99 99 3F 66 66 A6 3F 33 33 B3 3F 66 66 06 40 CD CC 0C 40 33 33 13 40 9A 99 19 40 66 66 46 40 CD CC 4C 40 33 33 53 40 9A 99 59 40 33 33 83 40 66 66 86 40 9A 99 89 40 CD CC 8C 40 33 33 A3 40 66 66 A6 40 9A 99 A9 40 CD CC AC 40 33 33 C3 40 66 66 C6 40 9A 99 C9 40 CD CC CC 40 33 33 E3 40 66 66 E6 40 9A 99 E9 40 CD CC EC 40 9A 99 01 41 33 33 03 41 CD CC 04 41 66 66 06 41 9A 99 11 41 33 33 13 41 CD CC 14 41 66 66 16 41 9A 99 21 41 33 33 23 41 CD CC 24 41 66 66 26 41 9A 99 31 41 33 33 33 41 CD CC 34 41 66 66 36 41 9A 99 41 41 33 33 43 41 CD CC 44 41 66 66 46 41 9A 99 51 41 33 33 53 41 CD CC 54 41 66 66 56 41 9A 99 61 41 33 33 63 41 CD CC 64 41 66 66 66 41 9A 99 71 41 33 33 73 41 CD CC 74 41 66 66 76 41 CD CC 80 41 9A 99 81 41 66 66 82 41 33 33 83 41 65 66 67 68 69 6A 6B 6C 6D 6E 6F 70 71 72 73 74 C9 CA CB CC CD CE CF D0 D1 D2",
+        "protocol": {
+            "deviceId": "testDevice",
+            "type": "dataframe",
+            "forceValues": [ 1, 2, 3, 4, 5, 6, 7, 8 ],
+            "imuValues": [
+                { "x": 1.1, "y": 1.2, "z": 1.3, "w": 1.4 },
+                { "x": 2.1, "y": 2.2, "z": 2.3, "w": 2.4 },
+                { "x": 3.1, "y": 3.2, "z": 3.3, "w": 3.4 },
+                { "x": 4.1, "y": 4.2, "z": 4.3, "w": 4.4 },
+                { "x": 5.1, "y": 5.2, "z": 5.3, "w": 5.4 },
+                { "x": 6.1, "y": 6.2, "z": 6.3, "w": 6.4 },
+                { "x": 7.1, "y": 7.2, "z": 7.3, "w": 7.4 },
+                { "x": 8.1, "y": 8.2, "z": 8.3, "w": 8.4 },
+                { "x": 9.1, "y": 9.2, "z": 9.3, "w": 9.4 },
+                { "x": 10.1, "y": 10.2, "z": 10.3, "w": 10.4 },
+                { "x": 11.1, "y": 11.2, "z": 11.3, "w": 11.4 },
+                { "x": 12.1, "y": 12.2, "z": 12.3, "w": 12.4 },
+                { "x": 13.1, "y": 13.2, "z": 13.3, "w": 13.4 },
+                { "x": 14.1, "y": 14.2, "z": 14.3, "w": 14.4 },
+                { "x": 15.1, "y": 15.2, "z": 15.3, "w": 15.4 },
+                { "x": 16.1, "y": 16.2, "z": 16.3, "w": 16.4 }
+            ],
+            "imuStates": [ 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116 ],
+            "vibrationStates": [ 201, 202, 203, 204, 205, 206, 207, 208, 209, 210 ]
+        }
+    },
+    {
+        "name": "informationV0.9",
+        "compatibility": "0.9.0",
+        "direction": "fromDevice",
+        "hardwareProtocol": "7B 48 61 6E 64 3A 52 65 63 68 74 73 2C 56 69 62 72 61 74 69 6F 6E 3A 7B 30 3A 76 69 62 31 2C 31 3A 76 69 62 32 2C 32 3A 76 69 62 33 7D 2C 49 4D 55 3A 7B 30 3A 69 6D 75 31 2C 31 3A 69 6D 75 32 2C 32 3A 69 6D 75 33 7D 7D",
+        "protocol": {
+            "deviceId": "testDevice",
+            "type": "information",
+            "deviceType": "rightGlove",
+            "firmwareVersion": "not implemented",
+            "firmwareDate": "not implemented",
+            "checkpoint": "not implemented",
+            "vibrationPositions": [ "vib1", "vib2", "vib3" ],
+            "imuPositions": [ "imu1", "imu2", "imu3" ]
+        }
+    }
+]

@@ -1,0 +1,8 @@
+package com.cynteract.connector.messages
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+class Scan(
+    val connectionType: String
+)

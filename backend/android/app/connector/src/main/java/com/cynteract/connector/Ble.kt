@@ -2,6 +2,7 @@ package com.cynteract.connector
 
 import android.content.Context
 
+
 class Ble : HardwareInterface {
     override var onDeviceConnected: ((HardwareInterface, String) -> Unit)?
         get() = TODO("Not yet implemented")
@@ -12,21 +13,11 @@ class Ble : HardwareInterface {
     override var onDeviceError: ((HardwareInterface, String, String) -> Unit)?
         get() = TODO("Not yet implemented")
         set(value) {}
-    override var onDeviceInformation: ((HardwareInterface, String, InformationV1In) -> Unit)?
-        get() = TODO("Not yet implemented")
-        set(value) {}
-    override var onDeviceData: ((HardwareInterface, String, DataReceive) -> Unit)?
-        get() = TODO("Not yet implemented")
-        set(value) {}
-    override var onDeviceDebug: ((HardwareInterface, String, String) -> Unit)?
+    override var onDeviceMessage: ((HardwareInterface, String, Any) -> Unit)?
         get() = TODO("Not yet implemented")
         set(value) {}
 
-    override fun requestInformation(id: String) {
-        TODO("Not yet implemented")
-    }
-
-    override fun sendData(id: String, data: DataSend) {
+    override fun sendMessage(id: String, data: Any) {
         TODO("Not yet implemented")
     }
 
