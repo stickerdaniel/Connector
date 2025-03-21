@@ -16,5 +16,10 @@ namespace Connector
         {
             return JsonUtility.FromJson<T>(json);
         }
+
+        public static object FromJson(string json, System.Type type)
+        {
+            return JsonUtility.FromJson(json, type);
+        }
     }
 }

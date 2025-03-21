@@ -38,20 +38,21 @@ public class StressTest : MonoBehaviour
             StopAllCoroutines();
             StartCoroutine(RestartDeviceManagerCoroutine());
         });
-        deviceManager.OnDeviceConnected+= device =>
+        deviceManager.OnDeviceConnected += device =>
         {
             requestInformationButton.onClick.RemoveAllListeners();
-            requestInformationButton.onClick.AddListener(() => deviceManager.RequestInformation(device.Id));
+            //requestInformationButton.onClick.AddListener(() => deviceManager.RequestInformation(device.Id));
             connected = true;
             UpdateColor();
-            device.OnReady += () =>
-            {
-                Debug.Log("Ready");
-                ready = true;
-                UpdateColor();
-            };
+            // device.OnReady += () =>
+            // {
+            //     Debug.Log("Ready");
+            //     ready = true;
+            //     UpdateColor();
+            // };
         };
-        deviceManager.OnDeviceDisconnected += device => {
+        deviceManager.OnDeviceDisconnected += device =>
+        {
             ready = false;
             connected = false;
             UpdateColor();
@@ -66,10 +67,10 @@ public class StressTest : MonoBehaviour
 
             Debug.Log("Stopping");
             deviceManager.Stop();
-            ready =false;
+            ready = false;
             connected = false;
             UpdateColor();
-            yield return new WaitForSeconds(float.Parse( delayInputField.text));
+            yield return new WaitForSeconds(float.Parse(delayInputField.text));
             Debug.Log("Starting");
             deviceManager.Start();
             yield return new WaitForSeconds(float.Parse(delayInputField.text));
@@ -83,7 +84,7 @@ public class StressTest : MonoBehaviour
     }
     private void Start()
     {
-        
+
     }
     private void OnDisable()
     {

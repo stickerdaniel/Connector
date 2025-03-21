@@ -11,7 +11,7 @@ using UnityEngine;
 #nullable enable
 namespace Connector
 {
-    class WindowsPlatformSpecific:IPlatformSpecific
+    class WindowsPlatformSpecific : IPlatformSpecific
     {
         Process? process;
 
@@ -61,12 +61,12 @@ namespace Connector
             }
         }
 
-        public void SendMessage(Message message)
+        public void SendMessage(string serializedMessage)
         {
             if (process == null || process.HasExited)
                 throw new Exception("Backend is not running");
 
-            message.Write(process.StandardInput);
+            process.StandardInput.WriteLine(serializedMessage);
         }
         public string? GetConnectorExeFilePath()
         {
@@ -74,7 +74,7 @@ namespace Connector
             foreach (var file in files)
             {
                 string fileName = Path.GetFileName(file);
-                if (Regex.IsMatch(fileName, "Connector.*exe")&&!fileName.Contains(".meta"))
+                if (Regex.IsMatch(fileName, "Connector.*exe") && !fileName.Contains(".meta"))
                 {
                     return file;
                 }

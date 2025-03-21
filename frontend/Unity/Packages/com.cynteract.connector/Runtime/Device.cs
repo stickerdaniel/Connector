@@ -8,34 +8,14 @@ namespace Connector
     public class Device
     {
         public string Id { get; private set; }
-        public Information? Information { get; private set; }
-        public DeviceType DeviceType { get; private set; }
         public ConnectionType ConnectionType { get; private set; }
-        public Dataframe? LastData { get; private set; }
-        public bool IsReady { get; private set; }
-
-
-        public event Action<Dataframe>? OnData;
-        public event Action<Information>? OnInformation;
-        public event Action? OnReady;
         public event Action<Exception>? OnError;
+        public event Action<object>? OnMessage;
 
-
-
-
-        public void RaiseData(Dataframe data)
+        private Action<string?, object>? _sendMessageDelegate;
+        public void SendMessage(object message)
         {
-            LastData=data;
-            OnData?.Invoke(data);
-            if (!IsReady)
-            {
-
-                if (Information != null)
-                {
-                    OnReady?.Invoke();
-                    IsReady = true;
-                }
-            }
+            _sendMessageDelegate(Id, message);
         }
 
         public void RaiseError(Exception e)
@@ -43,26 +23,16 @@ namespace Connector
             OnError?.Invoke(e);
         }
 
-        public void RaiseInformation(Information information)
+        public void RaiseMessage(object message)
         {
-            Debug.Log("Device received information");
-
-            Information = information;
-            DeviceType = information.hand switch
-            {
-                "Links" => DeviceType.Left,
-                "Rechts" => DeviceType.Right,
-                _ => DeviceType.Beacon
-            };
-            OnInformation?.Invoke(information);
+            OnMessage?.Invoke(message);
         }
 
-        public Device(string id, Information? information, DeviceType deviceType, ConnectionType connectionType)
+        public Device(string id, ConnectionType connectionType, Action<string?, object> sendMessageDelegate)
         {
             Id = id;
-            Information = information;
-            DeviceType = deviceType;
             ConnectionType = connectionType;
+            _sendMessageDelegate = sendMessageDelegate;
         }
     }
 }
