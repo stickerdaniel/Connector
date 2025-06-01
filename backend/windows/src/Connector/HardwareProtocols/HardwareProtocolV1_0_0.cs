@@ -12,14 +12,14 @@ using System.Text.RegularExpressions;
 namespace Connector
 {
     /// <summary> This version adds back the double quotes to the information json package. </summary>
-    public class CompatibilityV1_0_0 : ICompatibility
+    public class HardwareProtocolV1_0_0 : IHardwareProtocolVersion
     {
         public string Version { get; } = "1.0.0";
-        private readonly CompatibilityV0_9_0 compatibilityV0_9_0 = new();
+        private readonly HardwareProtocolV0_9 protocolV0_9_0 = new();
 
         public void Serialize(BinaryWriter writer, object message)
         {
-            compatibilityV0_9_0.Serialize(writer, message);
+            protocolV0_9_0.Serialize(writer, message);
         }
 
         public object Deserialize(BinaryReader binaryReader)
@@ -34,12 +34,12 @@ namespace Connector
                 string informationV0_9_0 = Regex.Replace(information, @"""([\w]+)""", "$1");
                 byte[] bufferV0_9_0 = Encoding.UTF8.GetBytes(informationV0_9_0);
                 BinaryReader binaryReaderV0_9_0 = new BinaryReader(new MemoryStream(bufferV0_9_0));
-                return compatibilityV0_9_0.Deserialize(binaryReaderV0_9_0);
+                return protocolV0_9_0.Deserialize(binaryReaderV0_9_0);
             }
             else
             {
                 binaryReader.BaseStream.Position = 0;
-                return compatibilityV0_9_0.Deserialize(binaryReader);
+                return protocolV0_9_0.Deserialize(binaryReader);
             }
         }
 

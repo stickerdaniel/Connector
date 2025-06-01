@@ -1,8 +1,9 @@
 import com.cynteract.connector.HardwareProtocol
 import com.cynteract.connector.Protocol
 import com.cynteract.connector.TestData
-import com.cynteract.connector.compatibility.CompatibilityV0_9_0
-import com.cynteract.connector.compatibility.CompatibilityV1_0_0
+import com.cynteract.connector.hardwareprotocols.HardwareProtocolV0_9_0
+import com.cynteract.connector.hardwareprotocols.HardwareProtocolV1_0_0
+import com.cynteract.connector.hardwareprotocols.HardwareProtocolV2_0_0
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -42,8 +43,9 @@ class SerializationTest {
         direction: String
     ) {
         val compatibility = when (compatibilityVersion) {
-            "0.9.0" -> CompatibilityV0_9_0()
-            "1.0.0" -> CompatibilityV1_0_0()
+            "0.9.0" -> HardwareProtocolV0_9_0()
+            "1.0.0" -> HardwareProtocolV1_0_0()
+            "2.0.0" -> HardwareProtocolV2_0_0()
             else -> throw NotImplementedError("Unknown compatibility version: $compatibilityVersion")
         }
         if (direction == "toDevice") {
