@@ -16,6 +16,10 @@ class MainActivity : Activity() {
     private lateinit var edtMessage: EditText
     private var plugin = Main(object : MessageListener {
         override fun onMessage(message: String) {
+            val timestamp = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
+            val rxMessage = "RX [$timestamp]: $message \n"
+            // this will get spammed too quickly
+            // appendMessage(rxMessage, R.color.tint_red)
             Log.d("Main", "onMessage: $message")
         }
     })
@@ -27,6 +31,9 @@ class MainActivity : Activity() {
         txtTerminal = findViewById(R.id.txtTerminal)
         edtMessage = findViewById(R.id.edtMessage)
         val btnSend = findViewById<Button>(R.id.btnSend)
+        btnSend.setOnClickListener {
+            sendMessage()
+        }
         plugin.initialize(this)
     }
 
@@ -37,10 +44,12 @@ class MainActivity : Activity() {
             val timestamp = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
             appendMessage("TX [$timestamp]: $message", R.color.tint_blue)
 
-            // Simulating RX response (dummy message)
-            val rxMessage = "RX [$timestamp]: hi \n"
-            appendMessage(rxMessage, R.color.tint_red)
-
+            try {
+                plugin.sendMessage(message)
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Error sending message", e)
+                appendMessage("Error: ${e.message}", R.color.tint_red)
+            }
             edtMessage.text.clear()
         }
     }

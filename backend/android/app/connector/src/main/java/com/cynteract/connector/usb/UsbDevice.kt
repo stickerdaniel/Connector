@@ -174,9 +174,10 @@ class UsbDevice(
         writeTimestamp = now
         val buffer = ByteBuffer.allocate(512)
         hardwareProtocol.serialize(buffer, message)
+        val bufferToSend = buffer.array().copyOfRange(0, buffer.position())
         try {
             synchronized(writeLock) {
-                serial.write(buffer.array(), 500)
+                serial.write(bufferToSend, 500)
                 serial.write(PACKAGE_DELIM, 500)
             }
         } catch (e: IOException) {
