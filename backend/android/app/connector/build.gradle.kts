@@ -6,10 +6,10 @@ plugins {
 
 android {
     namespace = "com.cynteract.connector"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
-        minSdk = 29
+        minSdk = 26
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
