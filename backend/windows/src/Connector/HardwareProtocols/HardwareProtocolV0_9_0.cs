@@ -12,7 +12,7 @@ using System.Text.RegularExpressions;
 
 namespace Connector
 {
-    public class CompatibilityV0_9_0 : ICompatibility
+    public class HardwareProtocolV0_9 : IHardwareProtocolVersion
     {
         public string Version { get; } = "0.9.0";
         public void Serialize(BinaryWriter writer, object message)
@@ -74,7 +74,7 @@ namespace Connector
             }
             else
             {
-                throw new Exception("Unknown message format.");
+                throw new ArgumentException("Unknown message format.");
             }
 
 
@@ -91,9 +91,11 @@ namespace Connector
                         "Strap" => "strap",
                         _ => informationV0_9.Hand
                     },
-                    checkpoint = "not implemented",
+                    hardwareVersion = "not implemented",
                     firmwareVersion = "not implemented",
                     firmwareDate = "not implemented",
+                    userType = "pro",
+                    checkpoint = "not implemented",
                     vibrationPositions = informationV0_9.Vibration!.Values.ToArray(),
                     imuPositions = informationV0_9.IMU!.Values.ToArray(),
                 },

@@ -1,4 +1,4 @@
-package com.cynteract.connector.compatibility
+package com.cynteract.connector.hardwareprotocols
 
 import com.cynteract.connector.JsonHelper
 import com.cynteract.connector.messages.Command
@@ -12,7 +12,8 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.charset.StandardCharsets
 
-class CompatibilityV0_9_0 : Compatibility {
+@Suppress("ClassName")
+class HardwareProtocolV0_9_0 : HardwareProtocolVersion {
     override val version: String = "0.9.0"
 
     override fun serialize(writer: ByteBuffer, message: Any) {
@@ -61,9 +62,11 @@ class CompatibilityV0_9_0 : Compatibility {
                     "Strap" -> "strap"
                     else -> message.Hand
                 },
-                checkpoint = "not implemented",
+                hardwareVersion = "not implemented",
                 firmwareVersion = "not implemented",
                 firmwareDate = "not implemented",
+                userType = "pro",
+                checkpoint = "not implemented",
                 vibrationPositions = message.Vibration.values.toTypedArray(),
                 imuPositions = message.IMU.values.toTypedArray()
             )
