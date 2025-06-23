@@ -1,8 +1,8 @@
-package com.cynteract.connector.compatibility
+package com.cynteract.connector.hardwareprotocols
 
 import java.nio.ByteBuffer
 
-interface Compatibility {
+interface HardwareProtocolVersion {
     val version: String
     fun serialize(writer: ByteBuffer, message: Any)
     fun deserialize(reader: ByteBuffer): Any

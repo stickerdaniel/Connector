@@ -1,5 +1,6 @@
 
 namespace Connector.Tests;
+
 public class SerializationTest
 {
     static IEnumerable<TestCaseData> GetTestCases()
@@ -34,10 +35,11 @@ public class SerializationTest
     [Test, TestCaseSource(nameof(GetCompatibilityTestCases))]
     public void SerializeCompatibilityTest(string name, string protocolJson, string hardwareProtocolPrettyBinary, string compatibilityVersion, string direction)
     {
-        ICompatibility compatibility = compatibilityVersion switch
+        IHardwareProtocolVersion compatibility = compatibilityVersion switch
         {
-            "0.9.0" => new CompatibilityV0_9_0(),
-            "1.0.0" => new CompatibilityV1_0_0(),
+            "0.9.0" => new HardwareProtocolV0_9(),
+            "1.0.0" => new HardwareProtocolV1_0_0(),
+            "2.0.0" => new HardwareProtocolV2_0_0(),
             _ => throw new NotImplementedException("Unknown compatibility version: " + compatibilityVersion)
         };
         if (direction == "toDevice")
