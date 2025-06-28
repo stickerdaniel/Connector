@@ -16,7 +16,7 @@ namespace Connector
         private ISerialPort serial;
         private CancellationTokenSource readThreadCancellationTokenSource = new();
         private CancellationTokenSource writeThreadCancellationTokenSource = new();
-        private Thread readThread, writeThread;
+        private Thread cleanUpThread;
         private readonly object writeLock = new();
         private ConcurrentQueue<object> messageSendQueue = new();
         private class ReadBuffer
@@ -29,7 +29,7 @@ namespace Connector
         public static readonly byte[] PACKAGE_DELIM = Encoding.UTF8.GetBytes("CYNTERACT\n");
         private HardwareProtocol hardwareProtocol = new();
 
-        public event Action<string> OnRequestConnectionCheck;
+        public event Action OnDeviceDisconnected;
         public event Action<string, string> OnDeviceError;
 #pragma warning disable 67
         public event Action<string, object> OnDeviceMessage;
@@ -56,16 +56,42 @@ namespace Connector
 
         public void Start()
         {
-            serial.Open();
-            serial.DiscardOutBuffer();
-            serial.DiscardInBuffer();
+            cleanUpThread = new Thread(() => CleanUpRoutine());
+            cleanUpThread.Name = "UsbDevice Clean Up Thread";
+            cleanUpThread.Start();
+        }
+        private void CleanUpRoutine()
+        {
+            try
+            {
+                serial.Open();
+                serial.DiscardOutBuffer();
+                serial.DiscardInBuffer();
 
+                var readThread = new Thread(() => ReadRoutine(readThreadCancellationTokenSource.Token));
+                readThread.Name = "UsbDevice Read Thread";
+                readThread.Start();
+                var writeThread = new Thread(() => WriteRoutine(writeThreadCancellationTokenSource.Token));
+                writeThread.Name = "UsbDevice Write Thread";
+                writeThread.Start();
 
-            readThread = new Thread(() => ReadRoutine(readThreadCancellationTokenSource.Token));
-            readThread.Start();
-            writeThread = new Thread(() => WriteRoutine(writeThreadCancellationTokenSource.Token));
-            writeThread.Start();
+                readThread.Join();
+                writeThread.Join();
 
+                serial.Close();
+
+                readThread = null;
+                writeThread = null;
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                // The registry needs some time to update after the device is disconnected.
+                Thread.Sleep(100);
+                OnDeviceDisconnected?.Invoke();
+            }
+            catch (Exception e)
+            {
+                OnDeviceError?.Invoke(PortName, e.Message);
+            }
         }
         public void Close()
         {
@@ -73,15 +99,12 @@ namespace Connector
             {
                 readThreadCancellationTokenSource.Cancel();
                 writeThreadCancellationTokenSource.Cancel();
-                readThread.Join();
-                writeThread.Join();
-                serial.Close();
+                cleanUpThread.Join();
             }
             catch (Exception e)
             {
                 OnDeviceError?.Invoke(PortName, e.Message);
             }
-
         }
 
         void ReceiveMessage(CancellationToken cancellationToken)
@@ -151,12 +174,14 @@ namespace Connector
                 }
                 catch (Exception e)
                 {
+                    // port was closed
+                    if (!serial.IsOpen)
+                        return;
+
                     OnDeviceError?.Invoke(PortName, e.ToString());
                     Thread.Sleep(50);
-                    // check if device is still connected as com device
-                    OnRequestConnectionCheck?.Invoke(PortName);
 
-                    // stream was closed or has problems, wait for reconnection/resolution
+                    // stream has problems, wait for resolution
                     if (e is not TimeoutException)
                         Thread.Sleep(500);
                 }
@@ -165,7 +190,7 @@ namespace Connector
         }
         void WriteRoutine(CancellationToken cancellationToken)
         {
-            while (!cancellationToken.IsCancellationRequested)
+            while (!cancellationToken.IsCancellationRequested && serial.IsOpen)
             {
                 try
                 {
@@ -181,12 +206,14 @@ namespace Connector
 
                 catch (Exception e)
                 {
+                    // port was closed
+                    if (!serial.IsOpen)
+                        return;
+
                     OnDeviceError?.Invoke(PortName, e.ToString());
                     Thread.Sleep(50);
-                    // check if device is still connected as com device
 
-                    OnRequestConnectionCheck?.Invoke(PortName);
-                    // stream was closed or has problems, wait for reconnection/resolution
+                    // stream has problems, wait for resolution
                     if (e is not TimeoutException)
                         Thread.Sleep(500);
                 }

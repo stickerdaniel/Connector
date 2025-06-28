@@ -22,7 +22,7 @@ namespace Connector
     /// </summary>
     public class SerialPortWrapper : ISerialPort
     {
-        private readonly SerialPort _serialPort;
+        private SerialPort _serialPort;
 
         public SerialPortWrapper(SerialPort serialPort)
         {
@@ -38,7 +38,16 @@ namespace Connector
 
         public void Close()
         {
-            _serialPort.Close();
+            if (_serialPort == null)
+                return;
+            if (_serialPort.IsOpen)
+            {
+                _serialPort.DiscardInBuffer();
+                _serialPort.DiscardOutBuffer();
+                _serialPort.Close();
+            }
+            _serialPort.Dispose();
+            _serialPort = null;
         }
 
         public void Write(byte[] bytes, int offset, int count)

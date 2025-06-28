@@ -78,27 +78,58 @@ namespace Connector
                 }
             }
         }
+        private static IEnumerable<string> ListSubKeys(Microsoft.Win32.RegistryKey key)
+        {
+            if (key != null)
+                foreach (var subKeyName in key.GetSubKeyNames())
+                    yield return subKeyName;
+        }
+        private static IEnumerable<string> ListValues(Microsoft.Win32.RegistryKey key)
+        {
+            if (key != null)
+                foreach (var valueName in key.GetValueNames())
+                    yield return key.GetValue(valueName)?.ToString(); ;
+        }
+
         public void ScanForDevices()
         {
             HashSet<string> ports = new();
-            // Use WMI to get the PNPDeviceID of each COM port
-            ManagementObjectSearcher searcher = new ManagementObjectSearcher("Select * from WIN32_SerialPort");
-            foreach (ManagementObject queryObj in searcher.Get())
+            // Use registry to find and filter COM ports by VID/PID
+            using (var serialKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"HARDWARE\DEVICEMAP\SERIALCOMM"))
+            using (var usbRootKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Enum\USB"))
             {
-                string pnpDeviceID = queryObj["PNPDeviceID"].ToString();
-                string portName = queryObj["DeviceID"].ToString();
-                if (
-                    //V2
-                    (pnpDeviceID.Contains("VID_10C4") && pnpDeviceID.Contains("PID_EA60"))
-                    ||
-                    //V3
-                    (pnpDeviceID.Contains("VID_303A") && pnpDeviceID.Contains("PID_1001"))
-                    )
+                foreach (var portName in ListValues(serialKey))
                 {
+                    if (string.IsNullOrEmpty(portName))
+                        continue;
 
-                    ports.Add(portName);
+                    foreach (var deviceKeyName in ListSubKeys(usbRootKey))
+                    {
+                        // Filter by VID/PID
+                        if (
+                        // V2
+                        (deviceKeyName.Contains("VID_10C4") && deviceKeyName.Contains("PID_EA60")) ||
+                        // V3
+                        (deviceKeyName.Contains("VID_303A") && deviceKeyName.Contains("PID_1001"))
+                        )
+                        {
+                            using (var deviceKey = usbRootKey.OpenSubKey(deviceKeyName))
+                            {
+                                foreach (var instanceKeyName in ListSubKeys(deviceKey))
+                                {
+                                    using (var deviceParameters = deviceKey.OpenSubKey($"{instanceKeyName}\\Device Parameters"))
+                                    {
+                                        string port = deviceParameters?.GetValue("PortName") as string;
+                                        if (string.Equals(port, portName, StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            ports.Add(portName);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
-
             }
             foreach (var portName in ports.Except(devices.Keys))
             {
@@ -122,17 +153,12 @@ namespace Connector
 
             device.OnDeviceMessage += DeviceOnDeviceMessage;
             device.OnDeviceError += DeviceOnDeviceError;
-            device.OnRequestConnectionCheck += RecheckConnection;
-
+            // Rescan devices after clean up. The registry updates do not match the timing of the Win32_DeviceChangeEvent.
+            device.OnDeviceDisconnected += EnqueueScan;
 
             devices.Add(portName, device);
             device.Start();
             OnDeviceConnected?.Invoke(this, portName);
-        }
-
-        private void RecheckConnection(string portName)
-        {
-            EnqueueScan();
         }
 
         private void RemoveDevice(string portName)
@@ -141,7 +167,7 @@ namespace Connector
 
             device.OnDeviceMessage -= DeviceOnDeviceMessage;
             device.OnDeviceError -= DeviceOnDeviceError;
-            device.OnRequestConnectionCheck -= RecheckConnection;
+            device.OnDeviceDisconnected -= EnqueueScan;
 
             device.Close();
 
