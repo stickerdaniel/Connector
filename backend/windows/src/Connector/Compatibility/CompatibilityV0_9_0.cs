@@ -94,8 +94,8 @@ namespace Connector
                     checkpoint = "not implemented",
                     firmwareVersion = "not implemented",
                     firmwareDate = "not implemented",
-                    vibrationPositions = informationV0_9.Vibration!.Values.ToArray(),
-                    imuPositions = informationV0_9.IMU!.Values.ToArray(),
+                    vibrationPositions = TransformIndexDictionaryToArray(informationV0_9.Vibration!),
+                    imuPositions = TransformIndexDictionaryToArray(informationV0_9.IMU!),
                 },
                 DataframeV0_9 dataframeV0_9 => new Messages.Dataframe
                 {
@@ -117,6 +117,18 @@ namespace Connector
         }
 
         private bool MatchHeader(byte[] buffer, string header) => buffer.Take(header.Length).SequenceEqual(header.Select(b => (byte)b));
+        private string[] TransformIndexDictionaryToArray(Dictionary<string, string> dictionary)
+        {
+            int maxIndex = dictionary.Keys.Select(key => int.Parse(key)).Max();
+            string[] array = new string[maxIndex + 1];
+            Array.Fill(array, string.Empty);
+            foreach (var kvp in dictionary)
+            {
+                int index = int.Parse(kvp.Key);
+                array[index] = kvp.Value;
+            }
+            return array;
+        }
 
         private class InformationV0_9
         {
