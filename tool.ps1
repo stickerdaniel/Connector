@@ -53,7 +53,7 @@ function windows_build {
         Write-Output "dotnet publish failed."
         exit $LASTEXITCODE
     }
-    Move-Item -Path "$projectFolder\bin\Release\net8.0-windows10.0.22621.0\win-x64\publish\Connector.exe" -Destination $outputPath -Force
+    Copy-Item -Path "$projectFolder\bin\Release\net8.0-windows10.0.22621.0\win-x64\publish\Connector.exe" -Destination $outputPath -Force
 }
 
 function build_all {
