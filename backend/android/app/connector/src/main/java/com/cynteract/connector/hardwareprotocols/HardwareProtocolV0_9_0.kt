@@ -67,8 +67,8 @@ class HardwareProtocolV0_9_0 : HardwareProtocolVersion {
                 firmwareDate = "not implemented",
                 userType = "pro",
                 checkpoint = "not implemented",
-                vibrationPositions = message.Vibration.values.toTypedArray(),
-                imuPositions = message.IMU.values.toTypedArray()
+                vibrationPositions = transformIndexMapToArray(message.Vibration),
+                imuPositions = transformIndexMapToArray(message.IMU)
             )
 
             is DataframeV0_9 -> Dataframe(
@@ -88,6 +88,16 @@ class HardwareProtocolV0_9_0 : HardwareProtocolVersion {
             is Debug -> message
             else -> throw IllegalArgumentException("Unknown message format.")
         }
+    }
+
+    private fun transformIndexMapToArray(map: Map<String, String>): Array<String> {
+        val maxIndex = map.keys.map { it.toInt() }.maxOrNull() ?: -1
+        val array = Array(maxIndex + 1) { "" }
+        for ((key, value) in map) {
+            val index = key.toInt()
+            array[index] = value
+        }
+        return array
     }
 
     @Serializable
