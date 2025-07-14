@@ -5,13 +5,14 @@ plugins {
 
 android {
     namespace = "com.cynteract.connector"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.cynteract.connector"
         versionCode = 1
         versionName = "1.0"
-        minSdk = 29
+        targetSdk = 35
+        minSdk = 26
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
