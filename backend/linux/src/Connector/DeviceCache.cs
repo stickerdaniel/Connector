@@ -5,7 +5,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+#if WINDOWS
 using Windows.ApplicationModel.UserDataAccounts.SystemAccess;
+#endif
 
 namespace Connector
 {

@@ -1,22 +1,30 @@
-﻿using System;
+﻿﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Ports;
 using System.Linq;
-using System.Management;
 using System.Threading;
-using Windows.Networking;
+#if WINDOWS
+using System.Management;
+using Microsoft.Win32;
+#endif
 
 namespace Connector
 {
-
     public class Usb : HardwareInterface
     {
+        // Supported VID/PID pairs
+        private static readonly (string vid, string pid)[] SupportedDevices = new[]
+        {
+            ("10C4", "EA60"), // V2
+            ("303A", "1001"), // V3
+        };
 
-        // identify by portName for now
         Dictionary<string, UsbDevice> devices = new();
+#if WINDOWS
         readonly ManagementEventWatcher watcher = new();
+#endif
 
         public string ConnectionType => Connector.ConnectionType.Usb;
         public event Action<HardwareInterface, string> OnDeviceConnected;
@@ -26,38 +34,36 @@ namespace Connector
 
         Thread serviceThread;
         ConcurrentQueue<Action> serviceQueue = new();
+
         public void Init()
         {
-
-            // 2: device connected
-            // 3: device disconnected
+#if WINDOWS
             var query = new WqlEventQuery("SELECT * FROM Win32_DeviceChangeEvent WHERE EventType = 2 OR EventType = 3")
             {
-                // poll every second
                 WithinInterval = new TimeSpan(0, 0, 1)
             };
             watcher.EventArrived += UsbDevicePlugged;
             watcher.Query = query;
             watcher.Start();
-
+#endif
             serviceThread = new Thread(ServiceRoutine);
+            serviceThread.IsBackground = true;
             serviceThread.Start();
-            // trigger initial scan
             EnqueueScan();
         }
+
+#if WINDOWS
         private void UsbDevicePlugged(object sender, EventArrivedEventArgs args)
         {
-            // rescan usb devices
             EnqueueScan();
         }
-        /// <summary>
-        /// Enqueues a ScanForDevices in the ServiceRoutine
-        /// When a Device has an error disconnected it requests a new Scan. But this scan has the potential to close the device and thereby the thread that this method is called from. To avoid looping dependencies, an action queue was added.
-        /// </summary>
+#endif
+
         private void EnqueueScan()
         {
             serviceQueue.Enqueue(ScanForDevices);
         }
+
         private void ServiceRoutine()
         {
             while (true)
@@ -78,25 +84,28 @@ namespace Connector
                 }
             }
         }
-        private static IEnumerable<string> ListSubKeys(Microsoft.Win32.RegistryKey key)
+
+#if WINDOWS
+        private static IEnumerable<string> ListSubKeys(RegistryKey key)
         {
             if (key != null)
                 foreach (var subKeyName in key.GetSubKeyNames())
                     yield return subKeyName;
         }
-        private static IEnumerable<string> ListValues(Microsoft.Win32.RegistryKey key)
+        private static IEnumerable<string> ListValues(RegistryKey key)
         {
             if (key != null)
                 foreach (var valueName in key.GetValueNames())
-                    yield return key.GetValue(valueName)?.ToString(); ;
+                    yield return key.GetValue(valueName)?.ToString();
         }
+#endif
 
         public void ScanForDevices()
         {
+#if WINDOWS
             HashSet<string> ports = new();
-            // Use registry to find and filter COM ports by VID/PID
-            using (var serialKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"HARDWARE\DEVICEMAP\SERIALCOMM"))
-            using (var usbRootKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Enum\USB"))
+            using (var serialKey = Registry.LocalMachine.OpenSubKey(@"HARDWARE\DEVICEMAP\SERIALCOMM"))
+            using (var usbRootKey = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Enum\USB"))
             {
                 foreach (var portName in ListValues(serialKey))
                 {
@@ -105,11 +114,8 @@ namespace Connector
 
                     foreach (var deviceKeyName in ListSubKeys(usbRootKey))
                     {
-                        // Filter by VID/PID
                         if (
-                        // V2
                         (deviceKeyName.Contains("VID_10C4") && deviceKeyName.Contains("PID_EA60")) ||
-                        // V3
                         (deviceKeyName.Contains("VID_303A") && deviceKeyName.Contains("PID_1001"))
                         )
                         {
@@ -140,6 +146,17 @@ namespace Connector
             {
                 RemoveDevice(portName);
             }
+#else
+            var filteredPorts = new HashSet<string>(Platform.GetSupportedUsbPorts(SupportedDevices));
+            foreach (var portName in filteredPorts.Except(devices.Keys))
+            {
+                AddDevice(portName);
+            }
+            foreach (var portName in devices.Keys.Except(filteredPorts))
+            {
+                RemoveDevice(portName);
+            }
+#endif
         }
 
         private void AddDevice(string portName)
@@ -153,9 +170,9 @@ namespace Connector
 
             device.OnDeviceMessage += DeviceOnDeviceMessage;
             device.OnDeviceError += DeviceOnDeviceError;
-            // Rescan devices after clean up. The registry updates do not match the timing of the Win32_DeviceChangeEvent.
+#if WINDOWS
             device.OnDeviceDisconnected += EnqueueScan;
-
+#endif
             devices.Add(portName, device);
             device.Start();
             OnDeviceConnected?.Invoke(this, portName);
@@ -167,15 +184,14 @@ namespace Connector
 
             device.OnDeviceMessage -= DeviceOnDeviceMessage;
             device.OnDeviceError -= DeviceOnDeviceError;
+#if WINDOWS
             device.OnDeviceDisconnected -= EnqueueScan;
-
+#endif
             device.Close();
 
             OnDeviceDisconnected?.Invoke(this, portName);
             devices.Remove(portName);
         }
-
-
 
         private void DeviceOnDeviceError(string portName, string errorMessage)
         {
