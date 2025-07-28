@@ -85,68 +85,8 @@ namespace Connector
             }
         }
 
-#if WINDOWS
-        private static IEnumerable<string> ListSubKeys(RegistryKey key)
-        {
-            if (key != null)
-                foreach (var subKeyName in key.GetSubKeyNames())
-                    yield return subKeyName;
-        }
-        private static IEnumerable<string> ListValues(RegistryKey key)
-        {
-            if (key != null)
-                foreach (var valueName in key.GetValueNames())
-                    yield return key.GetValue(valueName)?.ToString();
-        }
-#endif
-
         public void ScanForDevices()
         {
-#if WINDOWS
-            HashSet<string> ports = new();
-            using (var serialKey = Registry.LocalMachine.OpenSubKey(@"HARDWARE\DEVICEMAP\SERIALCOMM"))
-            using (var usbRootKey = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Enum\USB"))
-            {
-                foreach (var portName in ListValues(serialKey))
-                {
-                    if (string.IsNullOrEmpty(portName))
-                        continue;
-
-                    foreach (var deviceKeyName in ListSubKeys(usbRootKey))
-                    {
-                        if (
-                        (deviceKeyName.Contains("VID_10C4") && deviceKeyName.Contains("PID_EA60")) ||
-                        (deviceKeyName.Contains("VID_303A") && deviceKeyName.Contains("PID_1001"))
-                        )
-                        {
-                            using (var deviceKey = usbRootKey.OpenSubKey(deviceKeyName))
-                            {
-                                foreach (var instanceKeyName in ListSubKeys(deviceKey))
-                                {
-                                    using (var deviceParameters = deviceKey.OpenSubKey($"{instanceKeyName}\\Device Parameters"))
-                                    {
-                                        string port = deviceParameters?.GetValue("PortName") as string;
-                                        if (string.Equals(port, portName, StringComparison.OrdinalIgnoreCase))
-                                        {
-                                            ports.Add(portName);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            foreach (var portName in ports.Except(devices.Keys))
-            {
-                AddDevice(portName);
-            }
-
-            foreach (var portName in devices.Keys.Except(ports))
-            {
-                RemoveDevice(portName);
-            }
-#else
             var filteredPorts = new HashSet<string>(Platform.GetSupportedUsbPorts(SupportedDevices));
             foreach (var portName in filteredPorts.Except(devices.Keys))
             {
@@ -156,7 +96,6 @@ namespace Connector
             {
                 RemoveDevice(portName);
             }
-#endif
         }
 
         private void AddDevice(string portName)
