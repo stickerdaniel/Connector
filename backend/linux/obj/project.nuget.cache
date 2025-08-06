@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "dgSpecHash": "LsFu7LUeYPk=",
+  "success": true,
+  "projectFilePath": "/workspaces/Connector/backend/linux/linux.connector.csproj",
+  "expectedPackageFiles": [
+    "/home/codespace/.nuget/packages/microsoft.net.illink.tasks/8.0.18/microsoft.net.illink.tasks.8.0.18.nupkg.sha512",
+    "/home/codespace/.nuget/packages/runtime.linux-arm.runtime.native.system.io.ports/6.0.0/runtime.linux-arm.runtime.native.system.io.ports.6.0.0.nupkg.sha512",
+    "/home/codespace/.nuget/packages/runtime.linux-arm64.runtime.native.system.io.ports/6.0.0/runtime.linux-arm64.runtime.native.system.io.ports.6.0.0.nupkg.sha512",
+    "/home/codespace/.nuget/packages/runtime.linux-x64.runtime.native.system.io.ports/6.0.0/runtime.linux-x64.runtime.native.system.io.ports.6.0.0.nupkg.sha512",
+    "/home/codespace/.nuget/packages/runtime.native.system.io.ports/6.0.0/runtime.native.system.io.ports.6.0.0.nupkg.sha512",
+    "/home/codespace/.nuget/packages/runtime.osx-arm64.runtime.native.system.io.ports/6.0.0/runtime.osx-arm64.runtime.native.system.io.ports.6.0.0.nupkg.sha512",
+    "/home/codespace/.nuget/packages/runtime.osx-x64.runtime.native.system.io.ports/6.0.0/runtime.osx-x64.runtime.native.system.io.ports.6.0.0.nupkg.sha512",
+    "/home/codespace/.nuget/packages/system.codedom/8.0.0/system.codedom.8.0.0.nupkg.sha512",
+    "/home/codespace/.nuget/packages/system.io.ports/6.0.0/system.io.ports.6.0.0.nupkg.sha512",
+    "/home/codespace/.nuget/packages/system.management/8.0.0/system.management.8.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}
