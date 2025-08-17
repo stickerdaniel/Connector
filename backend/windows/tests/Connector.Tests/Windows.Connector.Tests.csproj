@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../../windows/windows.connector.csproj" />
+    <ProjectReference Include="../../src/Connector/windows.connector.csproj" />
   </ItemGroup>
 
   <ItemGroup>

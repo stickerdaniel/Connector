@@ -16,10 +16,7 @@
 
   <ItemGroup>
     <!-- Include all shared source files -->
-    <Compile Include="../shared/src/Connector/**/*.cs"  Exclude="../shared/src/Connector/Platform.cs"/>
-    <!-- Include platform-specific file 
-    <Compile Include="Platform.Windows.cs" />
-    -->
+    <Compile Include="../../../shared/src/Connector/**/*.cs"  />
   </ItemGroup>
 
 </Project>
