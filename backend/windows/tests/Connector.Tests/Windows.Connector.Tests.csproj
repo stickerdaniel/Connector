@@ -30,4 +30,8 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../../../shared/tests/Connector.Tests/*.cs" />
+  </ItemGroup>
 </Project>
