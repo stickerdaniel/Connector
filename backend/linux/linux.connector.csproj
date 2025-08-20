@@ -5,19 +5,18 @@
     <TargetFramework>net8.0</TargetFramework>
     <StartupObject>Connector.Program</StartupObject>
     <PublishSingleFile>true</PublishSingleFile>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="System.IO.Ports" Version="6.0.0" />
-    <PackageReference Include="System.Management" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Include all shared source files -->
+    <!-- Only include production/shared code -->
     <Compile Include="../shared/src/Connector/**/*.cs" />
-    <!-- Include platform-specific file 
-    <Compile Include="Platform.Linux.cs" />
-    -->
+    <Compile Include="Platform.linux.cs" />
   </ItemGroup>
-
 </Project>
