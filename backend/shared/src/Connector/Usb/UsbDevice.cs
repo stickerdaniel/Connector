@@ -6,9 +6,6 @@ using System.Text.RegularExpressions;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
-#if WINDOWS
-using Windows.Networking;
-#endif
 
 namespace Connector
 {

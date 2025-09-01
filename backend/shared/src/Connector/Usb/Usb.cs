@@ -5,10 +5,6 @@ using System.IO;
 using System.IO.Ports;
 using System.Linq;
 using System.Threading;
-#if WINDOWS
-using System.Management;
-using Microsoft.Win32;
-#endif
 
 namespace Connector
 {
@@ -22,9 +18,6 @@ namespace Connector
         };
 
         Dictionary<string, UsbDevice> devices = new();
-#if WINDOWS
-        readonly ManagementEventWatcher watcher = new();
-#endif
 
         public string ConnectionType => Connector.ConnectionType.Usb;
         public event Action<HardwareInterface, string> OnDeviceConnected;
@@ -38,13 +31,8 @@ namespace Connector
         public void Init()
         {
 #if WINDOWS
-            var query = new WqlEventQuery("SELECT * FROM Win32_DeviceChangeEvent WHERE EventType = 2 OR EventType = 3")
-            {
-                WithinInterval = new TimeSpan(0, 0, 1)
-            };
-            watcher.EventArrived += UsbDevicePlugged;
-            watcher.Query = query;
-            watcher.Start();
+            // Moved watcher setup into Platform.StartUsbMonitoring
+            Platform.StartUsbMonitoring(EnqueueScan);
 #endif
             serviceThread = new Thread(ServiceRoutine);
             serviceThread.IsBackground = true;
@@ -52,12 +40,6 @@ namespace Connector
             EnqueueScan();
         }
 
-#if WINDOWS
-        private void UsbDevicePlugged(object sender, EventArrivedEventArgs args)
-        {
-            EnqueueScan();
-        }
-#endif
 
         private void EnqueueScan()
         {

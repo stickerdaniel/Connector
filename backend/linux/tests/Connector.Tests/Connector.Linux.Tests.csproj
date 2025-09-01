@@ -20,7 +20,7 @@
   </ItemGroup>
 
  <ItemGroup>
-    <ProjectReference Include="../../linux.connector.csproj" />
+    <ProjectReference Include="../../Connector.Linux.csproj" />
   </ItemGroup>
 
   <ItemGroup>

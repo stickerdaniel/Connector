@@ -11,7 +11,6 @@ namespace Connector
         // Returns a list of supported USB ports for the given VID/PID pairs (Linux only)
         public static IEnumerable<string> GetSupportedUsbPorts((string vid, string pid)[] supportedDevices)
         {
-            Console.WriteLine("[Platform.cs] Using Linux platform code");
             var map = new Dictionary<string, string>();
             string byIdDir = "/dev/serial/by-id/";
             if (Directory.Exists(byIdDir))

@@ -17,6 +17,6 @@
   <ItemGroup>
     <!-- Only include production/shared code -->
     <Compile Include="../shared/src/Connector/**/*.cs" />
-    <Compile Include="Platform.linux.cs" />
+    <Compile Include="PlatformLinux.cs" />
   </ItemGroup>
 </Project>

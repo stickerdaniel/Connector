@@ -1,16 +1,53 @@
 using System;
 using System.Collections.Generic;
+using System.Management;
 using Microsoft.Win32;
 
 namespace Connector
 {
-    // Windows-only version extracted from oldPlatform.cs (Linux code removed)
     public static class Platform
     {
+        private static ManagementEventWatcher watcher;
+        private static Action changeCallback;
+
+        public static void StartUsbMonitoring(Action onChange)
+        {
+            changeCallback = onChange;
+            if (watcher != null) return;
+
+            try
+            {
+                var query = new WqlEventQuery("SELECT * FROM Win32_DeviceChangeEvent WHERE EventType = 2 OR EventType = 3")
+                {
+                    WithinInterval = TimeSpan.FromSeconds(1)
+                };
+                watcher = new ManagementEventWatcher(query);
+                watcher.EventArrived += (_, __) =>
+                {
+                    try { changeCallback?.Invoke(); } catch { }
+                };
+                watcher.Start();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("[PlatformWindows.cs] Failed to start watcher: " + ex.Message);
+                watcher?.Dispose();
+                watcher = null;
+            }
+        }
+
+        public static void StopUsbMonitoring()
+        {
+            if (watcher == null) return;
+            try { watcher.Stop(); } catch { }
+            watcher.Dispose();
+            watcher = null;
+            changeCallback = null;
+        }
+
         // Returns a list of supported USB (COM) ports for the given VID/PID pairs
         public static IEnumerable<string> GetSupportedUsbPorts((string vid, string pid)[] supportedDevices)
         {
-            Console.WriteLine("[Platform.windows.cs] Using Windows platform code");
             var ports = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             using (var serialKey = Registry.LocalMachine.OpenSubKey(@"HARDWARE\DEVICEMAP\SERIALCOMM"))
