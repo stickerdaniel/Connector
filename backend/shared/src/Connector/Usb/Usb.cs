@@ -30,10 +30,8 @@ namespace Connector
 
         public void Init()
         {
-#if WINDOWS
             // Moved watcher setup into Platform.StartUsbMonitoring
             Platform.StartUsbMonitoring(EnqueueScan);
-#endif
             serviceThread = new Thread(ServiceRoutine);
             serviceThread.IsBackground = true;
             serviceThread.Start();
@@ -91,9 +89,7 @@ namespace Connector
 
             device.OnDeviceMessage += DeviceOnDeviceMessage;
             device.OnDeviceError += DeviceOnDeviceError;
-#if WINDOWS
             device.OnDeviceDisconnected += EnqueueScan;
-#endif
             devices.Add(portName, device);
             device.Start();
             OnDeviceConnected?.Invoke(this, portName);
@@ -105,9 +101,7 @@ namespace Connector
 
             device.OnDeviceMessage -= DeviceOnDeviceMessage;
             device.OnDeviceError -= DeviceOnDeviceError;
-#if WINDOWS
             device.OnDeviceDisconnected -= EnqueueScan;
-#endif
             device.Close();
 
             OnDeviceDisconnected?.Invoke(this, portName);
