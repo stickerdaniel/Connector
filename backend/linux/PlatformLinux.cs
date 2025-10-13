@@ -41,6 +41,12 @@ namespace Connector
             return filteredPorts;
         }
 
+        // Added so shared code can call Platform.StartUsbMonitoring without #if WINDOWS guards.
+        public static void StartUsbMonitoring(Action onChanged)
+        {
+            // Blank for Linux, notification can be implemented here.
+        }
+
         private static string GetRealDevice(string symlink)
         {
             try
