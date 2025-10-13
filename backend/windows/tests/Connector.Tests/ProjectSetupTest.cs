@@ -10,7 +10,7 @@ public class ProjectSetupTest
         try
         {
             string projectRoot = Path.GetFullPath("../../../../../../..");
-            Assert.That(projectRoot.EndsWith("Connector"), Is.True); // Does was deprecated
+            Assert.That(projectRoot.EndsWith("Connector"), Is.True);
             Dictionary<string, string> syncedFiles = new Dictionary<string, string> {
             { "backend/windows/tests/Connector.Tests/TestData/testdata.json",
               "backend/android/app/connector/src/test/resources/testdata.json" },
