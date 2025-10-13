@@ -15,6 +15,7 @@ namespace Connector
             changeCallback = onChange;
             if (watcher != null) return;
 
+            bool started = false;
             try
             {
                 var query = new WqlEventQuery("SELECT * FROM Win32_DeviceChangeEvent WHERE EventType = 2 OR EventType = 3")
@@ -27,12 +28,15 @@ namespace Connector
                     try { changeCallback?.Invoke(); } catch { }
                 };
                 watcher.Start();
+                started = true;
             }
-            catch (Exception ex)
+            finally
             {
-                Console.WriteLine("[PlatformWindows.cs] Failed to start watcher: " + ex.Message);
-                watcher?.Dispose();
-                watcher = null;
+                if (!started)
+                {
+                    watcher?.Dispose();
+                    watcher = null;
+                }
             }
         }
 
