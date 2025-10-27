@@ -3,20 +3,25 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
+    <!-- add net8.0-windows10.0.22621.0 when on windows -->
     <StartupObject>Connector.Program</StartupObject>
+    <!--targeting windows if building on linux-->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <PublishSingleFile>true</PublishSingleFile>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
-    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="NUnit" Version="4.4.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="5.1.0" />
     <PackageReference Include="System.IO.Ports" Version="6.0.0" />
+    <PackageReference Include="System.Management" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Only include production/shared code -->
-    <Compile Include="../shared/src/Connector/**/*.cs" />
-    <Compile Include="PlatformLinux.cs" />
+    <Compile Include="../../../shared/src/Connector/**/*.cs" />
   </ItemGroup>
+
 </Project>

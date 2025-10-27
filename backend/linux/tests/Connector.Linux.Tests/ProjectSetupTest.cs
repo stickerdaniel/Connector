@@ -12,7 +12,7 @@ public class ProjectSetupTest
             string projectRoot = Path.GetFullPath("../../../../../../..");
             Assert.That(projectRoot.EndsWith("Connector"), Is.True);
             Dictionary<string, string> syncedFiles = new Dictionary<string, string> {
-            { "backend/windows/tests/Connector.Tests/TestData/testdata.json",
+            { "backend/linux/tests/Connector.Linux.Tests/TestData/testdata.json",
               "backend/android/app/connector/src/test/resources/testdata.json" },
             { "backend/shared/src/Connector/Protocol.cs",
               "frontend/Unity/Packages/com.cynteract.connector/Runtime/Protocol.cs" },
