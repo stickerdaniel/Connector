@@ -26,7 +26,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="TestData/testdata.json">
+    <Compile Include="../../../shared/tests/Connector.Tests/SerializationTest.cs" Link="SerializationTest.cs" />
+    <Compile Include="../../../shared/tests/Connector.Tests/UsbDeviceTest.cs" Link="UsbDeviceTest.cs" />
+    <Compile Include="../../../shared/tests/Connector.Tests/ProjectSetupTest.cs" Link="ProjectSetupTest.cs" />
+    <Compile Include="../../../shared/tests/Connector.Tests/TestData.cs" Link="TestData.cs" />
+    <Compile Include="../../../shared/tests/Connector.Tests/LiveTest.cs" Link="LiveTest.cs" />
+    <None Include="../../../shared/tests/Connector.Tests/TestData/testdata.json" Link="TestData/testdata.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
