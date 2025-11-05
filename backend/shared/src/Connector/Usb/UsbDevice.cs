@@ -4,7 +4,6 @@ using System.Threading;
 using System.IO.Ports;
 using System.Text.RegularExpressions;
 using System.Collections.Concurrent;
-using Windows.Networking;
 using System.IO;
 using System.Linq;
 

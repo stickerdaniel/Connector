@@ -46,7 +46,23 @@ namespace Connector
                     new Debug { message = "Backend started." }
                 )
             );
-            Program program = new Program();
+
+            Program program;
+            try
+            {
+                program = new Program();
+            }
+            catch (Exception e)
+            {
+                Console.Out.WriteLine(
+                    Protocol.Serialize(
+                        null,
+                        new Error { message = e.Message }
+                    )
+                );
+                return 1;
+            }
+
             bool exit = false;
             while (!exit)
             {
