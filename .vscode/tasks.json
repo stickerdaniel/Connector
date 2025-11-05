@@ -6,10 +6,10 @@
             "command": "dotnet",
             "type": "process",
             "args": [
-                "build",
+                "build"
             ],
             "options": {
-                "cwd": "${workspaceFolder}/backend/windows/src/Connector"
+                "cwd": "${workspaceFolder}/backend/windows/src/Connector.Windows"
             },
             "problemMatcher": "$msCompile"
         },
@@ -18,10 +18,10 @@
             "command": "dotnet",
             "type": "process",
             "args": [
-                "test",
+                "test"
             ],
             "options": {
-                "cwd": "${workspaceFolder}/backend/windows/tests/Connector.Tests"
+                "cwd": "${workspaceFolder}/backend/windows/tests/Connector.Windows.Tests"
             },
             "problemMatcher": "$msCompile"
         },
@@ -31,10 +31,10 @@
             "type": "process",
             "args": [
                 "watch",
-                "run",
+                "run"
             ],
             "options": {
-                "cwd": "${workspaceFolder}/backend/windows/src/Connector"
+                "cwd": "${workspaceFolder}/backend/windows/src/Connector.Windows"
             },
             "problemMatcher": "$msCompile"
         },
@@ -60,7 +60,7 @@
                 "-File",
                 "${workspaceFolder}/tool.ps1",
                 "android"
-            ],
+            ]
         },
         {
             "label": "Android Test",
@@ -70,7 +70,7 @@
                 "-File",
                 "${workspaceFolder}/tool.ps1",
                 "android_test"
-            ],
+            ]
         },
         {
             "label": "Build All",
@@ -80,7 +80,7 @@
                 "-File",
                 "${workspaceFolder}/tool.ps1",
                 "all"
-            ],
+            ]
         },
         {
             "label": "Release",
@@ -90,7 +90,7 @@
                 "-File",
                 "${workspaceFolder}/tool.ps1",
                 "release"
-            ],
+            ]
         },
         {
             "label": "Copy Files",
@@ -100,7 +100,7 @@
                 "-File",
                 "${workspaceFolder}/tool.ps1",
                 "copy_files"
-            ],
+            ]
         }
     ]
 }

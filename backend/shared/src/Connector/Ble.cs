@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
+using System.Threading.Tasks;
+using System.IO;
+#if WINDOWS
 using Windows.Devices.Bluetooth;
 using Windows.Devices.Enumeration;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
-using System.Linq;
-using Windows.Security.Cryptography;
-using System.Threading.Tasks;
 using System.Runtime.InteropServices.WindowsRuntime;
-using System.IO;
+using Windows.Security.Cryptography;
+#endif
 
 namespace Connector
 {
@@ -82,7 +84,7 @@ namespace Connector
             string[] requestedProperties = { "System.Devices.Aep.DeviceAddress", "System.Devices.Aep.IsConnected", "System.Devices.Aep.Bluetooth.Le.IsConnectable" };
 
             // BT_Code: Example showing paired and non-paired in a single query.
-            string aqsAllBluetoothLEDevices = "(System.Devices.Aep.ProtocolId:=\"{bb7bb05e-5972-42b5-94fc-76eaa7084d49}\")";
+            string aqsAllBluetoothLEDevices = "(System.Devices.Aep.ProtocolId:=\"{bb7bb05e-51208870398573714dotnet 972-42b5-94fc-76eaa7084d49}\")";
 
             deviceWatcher =
                     DeviceInformation.CreateWatcher(

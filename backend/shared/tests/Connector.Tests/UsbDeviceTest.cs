@@ -1,9 +1,9 @@
-
 using System.Collections.Concurrent;
 using System.Text;
 using System.Threading;
 
 namespace Connector.Tests;
+
 public class UsbDeviceTest
 {
     private UsbDevice usbDevice;
@@ -40,7 +40,7 @@ public class UsbDeviceTest
         Assert.That(serialPortMock.IsOpen, Is.False);
     }
 
-    [Test, Timeout(2000)]
+    [Test, CancelAfter(2000)]
     public void TestThreadsStop()
     {
         usbDevice.Close();

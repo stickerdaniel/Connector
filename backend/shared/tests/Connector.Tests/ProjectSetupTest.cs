@@ -1,10 +1,10 @@
-
-namespace Connector.Tests;
-
 /// <summary>
 /// This test class is used to check that the windows backend, android backend
 /// and unity frontend are all in sync.
 /// </summary>
+
+namespace Connector.Tests;
+
 public class ProjectSetupTest
 {
     [Test]
@@ -13,19 +13,19 @@ public class ProjectSetupTest
         try
         {
             string projectRoot = Path.GetFullPath("../../../../../../..");
-            Assert.That(projectRoot, Does.EndWith("Connector"));
+            Assert.That(projectRoot.EndsWith("Connector", StringComparison.OrdinalIgnoreCase), Is.True);
             Dictionary<string, string> syncedFiles = new Dictionary<string, string> {
-            { "backend/windows/tests/Connector.Tests/TestData/testdata.json",
-              "backend/android/app/connector/src/test/resources/testdata.json" },
-            { "backend/windows/src/Connector/Protocol.cs",
-              "frontend/Unity/Packages/com.cynteract.connector/Runtime/Protocol.cs" },
-        }.ToDictionary(
+                { "backend/shared/tests/Connector.Tests/TestData/testdata.json",
+                "backend/android/app/connector/src/test/resources/testdata.json" },
+                { "backend/shared/src/Connector/Protocol.cs",
+                "frontend/Unity/Packages/com.cynteract.connector/Runtime/Protocol.cs" },
+            }.ToDictionary(
                 entry => Path.Combine(projectRoot, entry.Key),
                 entry => Path.Combine(projectRoot, entry.Value));
             Dictionary<string, string> syncedFolders = new Dictionary<string, string> {
-            { "backend/windows/src/Connector/Messages",
-             "frontend/Unity/Packages/com.cynteract.connector/Runtime/Messages" },
-        }.ToDictionary(
+                { "backend/shared/src/Connector/Messages",
+                "frontend/Unity/Packages/com.cynteract.connector/Runtime/Messages" },
+            }.ToDictionary(
                 entry => Path.Combine(projectRoot, entry.Key),
                 entry => Path.Combine(projectRoot, entry.Value));
 

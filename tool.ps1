@@ -43,8 +43,8 @@ function windows_build {
     # get tag from package.json
     $packageJsonContent = Get-Content -Path "frontend/Unity/Packages/com.cynteract.connector/package.json" | ConvertFrom-Json
     $version = $packageJsonContent.version
-    $projectFolder = "./backend/windows/src/Connector"
-    $projectPath = "$projectFolder/Connector.csproj"
+    $projectFolder = "./backend/windows/src/Connector.Windows"
+    $projectPath = "$projectFolder/Connector.Windows.csproj"
     $outputPath = "./frontend/Unity/Assets/StreamingAssets/Connector_v$version.exe"
     # Do a clean build to show all warnings. This will slightly increase the build time for the next debug run as well.
     dotnet clean $projectPath
@@ -53,7 +53,7 @@ function windows_build {
         Write-Output "dotnet publish failed."
         exit $LASTEXITCODE
     }
-    Copy-Item -Path "$projectFolder\bin\Release\net8.0-windows10.0.22621.0\win-x64\publish\Connector.exe" -Destination $outputPath -Force
+    Copy-Item -Path "$projectFolder\bin\Release\net8.0\win-x64\publish\Connector.Windows.exe" -Destination $outputPath -Force
 }
 
 function build_all {
