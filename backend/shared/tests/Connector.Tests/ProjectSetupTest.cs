@@ -13,7 +13,7 @@ public class ProjectSetupTest
         try
         {
             string projectRoot = Path.GetFullPath("../../../../../../..");
-            Assert.That(projectRoot.EndsWith("Connector"), Is.True);
+            Assert.That(projectRoot.EndsWith("Connector", StringComparison.OrdinalIgnoreCase), Is.True);
             Dictionary<string, string> syncedFiles = new Dictionary<string, string> {
                 { "backend/shared/tests/Connector.Tests/TestData/testdata.json",
                 "backend/android/app/connector/src/test/resources/testdata.json" },
