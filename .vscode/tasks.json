@@ -41,7 +41,7 @@
         {
             "label": "Windows Publish",
             "type": "process",
-            "command": "pwsh",
+            "command": "powershell",
             "args": [
                 "-File",
                 "${workspaceFolder}/tool.ps1",
@@ -55,7 +55,7 @@
         {
             "label": "Android Build",
             "type": "process",
-            "command": "pwsh",
+            "command": "powershell",
             "args": [
                 "-File",
                 "${workspaceFolder}/tool.ps1",
@@ -65,7 +65,7 @@
         {
             "label": "Android Test",
             "type": "process",
-            "command": "pwsh",
+            "command": "powershell",
             "args": [
                 "-File",
                 "${workspaceFolder}/tool.ps1",
@@ -75,7 +75,7 @@
         {
             "label": "Build All",
             "type": "process",
-            "command": "pwsh",
+            "command": "powershell",
             "args": [
                 "-File",
                 "${workspaceFolder}/tool.ps1",
@@ -85,7 +85,7 @@
         {
             "label": "Release",
             "type": "process",
-            "command": "pwsh",
+            "command": "powershell",
             "args": [
                 "-File",
                 "${workspaceFolder}/tool.ps1",
@@ -95,7 +95,7 @@
         {
             "label": "Copy Files",
             "type": "process",
-            "command": "pwsh",
+            "command": "powershell",
             "args": [
                 "-File",
                 "${workspaceFolder}/tool.ps1",
