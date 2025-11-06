@@ -34,7 +34,13 @@ function android_build {
     set_android_env
     .\gradlew :app:connector:assembleRelease
     Write-Output "Copying Android connector to Unity project..."
-    Copy-Item -Path .\app\connector\build\outputs\aar\connector-release.aar -Destination .\..\..\frontend\Unity\Assets\connector-release_$tag.aar -Force
+    $outputPath = "./frontend/Unity/Assets/connector-release_$tag.aar"
+    # ensure destination directory exists
+    $destDir = Split-Path -Path $outputPath -Parent
+    if (-not (Test-Path $destDir)) {
+        New-Item -ItemType Directory -Path $destDir -Force | Out-Null
+    }
+    Copy-Item -Path .\app\connector\build\outputs\aar\connector-release.aar -Destination $outputPath -Force
     Pop-Location
 }
 
@@ -53,13 +59,43 @@ function windows_build {
         Write-Output "dotnet publish failed."
         exit $LASTEXITCODE
     }
+    # ensure destination directory exists
+    $destDir = Split-Path -Path $outputPath -Parent
+    if (-not (Test-Path $destDir)) {
+        New-Item -ItemType Directory -Path $destDir -Force | Out-Null
+    }
     Copy-Item -Path "$projectFolder\bin\Release\net8.0\win-x64\publish\Connector.Windows.exe" -Destination $outputPath -Force
+}
+
+function linux_build {
+    Write-Output "Building Linux connector..."
+    # get tag from package.json
+    $packageJsonContent = Get-Content -Path "frontend/Unity/Packages/com.cynteract.connector/package.json" | ConvertFrom-Json
+    $version = $packageJsonContent.version
+    $projectFolder = "./backend/linux/src/Connector.Linux"
+    $projectPath = "$projectFolder/Connector.Linux.csproj"
+    $outputPath = "./frontend/Unity/Assets/StreamingAssets/Connector_v$version"
+    # Do a clean build to show all warnings. This will slightly increase the build time for the next debug run as well.
+    dotnet clean $projectPath
+    dotnet publish -c Release -r linux-x64 --self-contained  $projectPath
+    if ($LASTEXITCODE -ne 0) {
+        Write-Output "dotnet publish failed."
+        exit $LASTEXITCODE
+    }
+    # ensure destination directory exists
+    $destDir = Split-Path -Path $outputPath -Parent
+    if (-not (Test-Path $destDir)) {
+        New-Item -ItemType Directory -Path $destDir -Force | Out-Null
+    }
+    Copy-Item -Path "$projectFolder/bin/Release/net8.0/linux-x64/publish/Connector.Linux" -Destination $outputPath -Force
 }
 
 function build_all {
     android_build
     Write-Output ""
     windows_build
+    Write-Output ""
+    linux_build
 }
 
 function upload_release {
@@ -118,7 +154,7 @@ function upload_release {
     }
     git push origin $tag
     gh release delete $tag --yes
-    gh release create $tag --generate-notes frontend/Unity/Assets/connector-release_$tag.aar frontend/Unity/Assets/StreamingAssets/Connector_$tag.exe
+    gh release create $tag --generate-notes frontend/Unity/Assets/connector-release_$tag.aar frontend/Unity/Assets/StreamingAssets/Connector_$tag.exe frontend/Unity/Assets/StreamingAssets/Connector_$tag
 }
 
 function copy_files {
@@ -152,6 +188,9 @@ switch ($argument) {
     "windows" {
         windows_build
     }
+    "linux" {
+        linux_build
+    }
     "all" {
         build_all
     }
@@ -162,6 +201,6 @@ switch ($argument) {
         copy_files
     }
     default {
-        Write-Host "Invalid argument. Possible commands: [android | windows | all | release | copy_files]."
+        Write-Host "Invalid argument. Possible commands: [android | windows | linux | all | release | copy_files]."
     }
 }

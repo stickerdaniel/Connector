@@ -53,6 +53,57 @@
             "problemMatcher": "$msCompile"
         },
         {
+            "label": "Linux Build",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/backend/linux/src/Connector.Linux"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Linux Test",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "test"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/backend/linux/tests/Connector.Linux.Tests"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Linux Watch Run",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "watch",
+                "run"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/backend/linux/src/Connector.Linux"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Linux Publish",
+            "type": "process",
+            "command": "powershell",
+            "args": [
+                "-File",
+                "${workspaceFolder}/tool.ps1",
+                "linux"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
             "label": "Android Build",
             "type": "process",
             "command": "powershell",
