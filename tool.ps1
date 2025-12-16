@@ -30,11 +30,12 @@ function android_build {
     $packageJsonContent = Get-Content -Path "frontend/Unity/Packages/com.cynteract.connector/package.json" | ConvertFrom-Json
     $version = $packageJsonContent.version
     $tag = "v$version"
+    $repoRoot = (Get-Location).Path
     Push-Location .\backend\android
     set_android_env
     .\gradlew :app:connector:assembleRelease
     Write-Output "Copying Android connector to Unity project..."
-    $outputPath = "./frontend/Unity/Assets/connector-release_$tag.aar"
+    $outputPath = Join-Path -Path $repoRoot -ChildPath "frontend/Unity/Assets/connector-release_$tag.aar"
     # ensure destination directory exists
     $destDir = Split-Path -Path $outputPath -Parent
     if (-not (Test-Path $destDir)) {
@@ -161,20 +162,39 @@ function copy_files {
     $projectRoot = (Get-Location).Path
 
     $syncedFiles = @{
-        "backend/windows/tests/Connector.Tests/TestData/testdata.json" = "backend/android/app/connector/src/test/resources/testdata.json"
-        "backend/windows/src/Connector/Protocol.cs"                    = "frontend/Unity/Packages/com.cynteract.connector/Runtime/Protocol.cs"
+        "backend/shared/tests/Connector.Tests/TestData/testdata.json" = "backend/android/app/connector/src/test/resources/testdata.json"
+        "backend/shared/src/Connector/Protocol.cs"                    = "frontend/Unity/Packages/com.cynteract.connector/Runtime/Protocol.cs"
     }
 
     $syncedFolders = @{
-        "backend/windows/src/Connector/Messages" = "frontend/Unity/Packages/com.cynteract.connector/Runtime/Messages"
+        "backend/shared/src/Connector/Messages" = "frontend/Unity/Packages/com.cynteract.connector/Runtime/Messages"
     }
 
     foreach ($file in $syncedFiles.GetEnumerator()) {
-        Copy-Item -Path (Join-Path $projectRoot $file.Key) -Destination (Join-Path $projectRoot $file.Value) -Force
+        $src = Join-Path $projectRoot $file.Key
+        $dst = Join-Path $projectRoot $file.Value
+        if (-not (Test-Path $src)) {
+            Write-Output "Skipping copy (source missing): $src"
+            continue
+        }
+        $dstDir = Split-Path -Path $dst -Parent
+        if (-not (Test-Path $dstDir)) {
+            New-Item -ItemType Directory -Path $dstDir -Force | Out-Null
+        }
+        Copy-Item -Path $src -Destination $dst -Force
     }
 
     foreach ($folder in $syncedFolders.GetEnumerator()) {
-        Copy-Item -Path (Join-Path $projectRoot "$($folder.Key)/*") -Destination (Join-Path $projectRoot $folder.Value) -Recurse -Force
+        $srcFolder = Join-Path $projectRoot $folder.Key
+        $dstFolder = Join-Path $projectRoot $folder.Value
+        if (-not (Test-Path $srcFolder)) {
+            Write-Output "Skipping folder copy (source missing): $srcFolder"
+            continue
+        }
+        if (-not (Test-Path $dstFolder)) {
+            New-Item -ItemType Directory -Path $dstFolder -Force | Out-Null
+        }
+        Copy-Item -Path (Join-Path $srcFolder "*") -Destination $dstFolder -Recurse -Force
     }
 }
 
