@@ -41,7 +41,20 @@ function android_build {
     if (-not (Test-Path $destDir)) {
         New-Item -ItemType Directory -Path $destDir -Force | Out-Null
     }
-    Copy-Item -Path .\app\connector\build\outputs\aar\connector-release.aar -Destination $outputPath -Force
+    # Find AAR using an absolute path
+    $aarBase = Join-Path $repoRoot "backend/android/app/connector/build/outputs/aar"
+    $aarCandidates = @()
+    if (Test-Path $aarBase) {
+        $aarCandidates = Get-ChildItem -Path $aarBase -Filter *.aar -Recurse -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending
+    }
+    if (-not $aarCandidates -or $aarCandidates.Count -eq 0) {
+        Write-Output "No AAR found under '$aarBase'. Skipping AAR copy."
+    }
+    else {
+        $aarPath = $aarCandidates[0].FullName
+        Write-Output "Copying AAR: $aarPath -> $outputPath"
+        Copy-Item -Path $aarPath -Destination $outputPath -Force
+    }
     Pop-Location
 }
 
