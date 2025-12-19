@@ -101,6 +101,53 @@
                 "${workspaceFolder}/tool.ps1",
                 "copy_files"
             ]
+        },
+        {
+            "label": "macOS Build",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/backend/macos/src/Connector.MacOS"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "macOS Watch Run",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "watch",
+                "run"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/backend/macos/src/Connector.MacOS"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "macOS Publish",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "${workspaceFolder}/tool.ps1",
+                "macos"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": "$msCompile",
+            "osx": {
+                "command": "pwsh",
+                "args": [
+                    "-File",
+                    "${workspaceFolder}/tool.ps1",
+                    "macos"
+                ]
+            }
         }
     ]
 }

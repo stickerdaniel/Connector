@@ -56,10 +56,30 @@ function windows_build {
     Copy-Item -Path "$projectFolder\bin\Release\net8.0\win-x64\publish\Connector.Windows.exe" -Destination $outputPath -Force
 }
 
+function macos_build {
+    Write-Output "Building macOS connector..."
+    # get tag from package.json
+    $packageJsonContent = Get-Content -Path "frontend/Unity/Packages/com.cynteract.connector/package.json" | ConvertFrom-Json
+    $version = $packageJsonContent.version
+    $projectFolder = "./backend/macos/src/Connector.MacOS"
+    $projectPath = "$projectFolder/Connector.MacOS.csproj"
+    $outputPath = "./frontend/Unity/Assets/StreamingAssets/Connector.MacOS_v$version"
+    # Do a clean build to show all warnings.
+    dotnet clean $projectPath
+    dotnet publish -c Release -r osx-arm64 --self-contained $projectPath
+    if ($LASTEXITCODE -ne 0) {
+        Write-Output "dotnet publish failed."
+        exit $LASTEXITCODE
+    }
+    Copy-Item -Path "$projectFolder/bin/Release/net8.0/osx-arm64/publish/Connector.MacOS" -Destination $outputPath -Force
+}
+
 function build_all {
     android_build
     Write-Output ""
     windows_build
+    Write-Output ""
+    macos_build
 }
 
 function upload_release {
@@ -152,6 +172,9 @@ switch ($argument) {
     "windows" {
         windows_build
     }
+    "macos" {
+        macos_build
+    }
     "all" {
         build_all
     }
@@ -162,6 +185,6 @@ switch ($argument) {
         copy_files
     }
     default {
-        Write-Host "Invalid argument. Possible commands: [android | windows | all | release | copy_files]."
+        Write-Host "Invalid argument. Possible commands: [android | windows | macos | all | release | copy_files]."
     }
 }
